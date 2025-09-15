@@ -11,6 +11,7 @@ class CDlgMain : public CDialogEx
 // コンストラクション
 public:
 	CDlgMain(CWnd* pParent = nullptr);	// 標準コンストラクター
+	virtual ~CDlgMain();
 
 // ダイアログ データ
 #ifdef AFX_DESIGN_TIME
@@ -24,7 +25,14 @@ public:
 // 実装
 protected:
 	HICON m_hIcon;
+	BOOL  m_bEnding;
 
+	void Init();
+	void End(const int nEndCode = 0);
+
+
+
+protected:
 	// 生成された、メッセージ割り当て関数
 	virtual BOOL OnInitDialog();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
@@ -35,4 +43,5 @@ public:
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnBnClickedCancel();
 	afx_msg void OnBnClickedButtonQuit();
+	afx_msg void OnEndSession(BOOL bEnding);
 };

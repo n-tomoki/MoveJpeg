@@ -53,8 +53,16 @@ END_MESSAGE_MAP()
 CDlgMain::CDlgMain(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MOVEJPEG_DIALOG, pParent)
 {
-	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+	m_hIcon = AfxGetApp()->LoadIconA(IDR_MAINFRAME);
+
+	BOOL m_bEnding = FALSE;
 }
+
+
+CDlgMain::~CDlgMain()
+{
+}
+
 
 void CDlgMain::DoDataExchange(CDataExchange* pDX)
 {
@@ -68,6 +76,7 @@ BEGIN_MESSAGE_MAP(CDlgMain, CDialogEx)
 	ON_BN_CLICKED(IDOK,&CDlgMain::OnBnClickedOk)
 	ON_BN_CLICKED(IDCANCEL,&CDlgMain::OnBnClickedCancel)
 	ON_BN_CLICKED(IDC_BUTTON_QUIT,&CDlgMain::OnBnClickedButtonQuit)
+	ON_WM_ENDSESSION()
 END_MESSAGE_MAP()
 
 
@@ -88,12 +97,12 @@ BOOL CDlgMain::OnInitDialog()
 	{
 		BOOL bNameValid;
 		CString strAboutMenu;
-		bNameValid = strAboutMenu.LoadString(IDS_ABOUTBOX);
+		bNameValid = strAboutMenu.LoadStringA(IDS_ABOUTBOX);
 		ASSERT(bNameValid);
 		if (!strAboutMenu.IsEmpty())
 		{
-			pSysMenu->AppendMenu(MF_SEPARATOR);
-			pSysMenu->AppendMenu(MF_STRING, IDM_ABOUTBOX, strAboutMenu);
+			pSysMenu->AppendMenuA(MF_SEPARATOR);
+			pSysMenu->AppendMenuA(MF_STRING, IDM_ABOUTBOX, strAboutMenu);
 		}
 	}
 
@@ -102,7 +111,7 @@ BOOL CDlgMain::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 大きいアイコンの設定
 	SetIcon(m_hIcon, FALSE);		// 小さいアイコンの設定
 
-	// TODO: 初期化をここに追加します。
+	Init();
 
 	return TRUE;  // フォーカスをコントロールに設定した場合を除き、TRUE を返します。
 }
@@ -130,7 +139,7 @@ void CDlgMain::OnPaint()
 	{
 		CPaintDC dc(this); // 描画のデバイス コンテキスト
 
-		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
+		SendMessageA(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
 
 		// クライアントの四角形領域内の中央
 		int cxIcon = GetSystemMetrics(SM_CXICON);
@@ -159,17 +168,56 @@ HCURSOR CDlgMain::OnQueryDragIcon()
 
 void CDlgMain::OnBnClickedOk()
 {
-	// TODO: ここにコントロール通知ハンドラー コードを追加します。
-	CDialogEx::OnOK();
+	CWnd *pWnd = GetFocus();
+
+	if (pWnd == GetDlgItem(IDC_BUTTON_QUIT)) { PostMessageA(WM_COMMAND, IDC_BUTTON_QUIT); }
+	else {
+		NextDlgCtrl();
+	}
 }
 
 void CDlgMain::OnBnClickedCancel()
 {
-	// TODO: ここにコントロール通知ハンドラー コードを追加します。
-	CDialogEx::OnCancel();
+	PostMessageA(WM_COMMAND, IDC_BUTTON_QUIT);
 }
+
+
+/////////////////////////////////////////////////////////////////////////////
+//===========================================================================
+// 開始＆終了処理
+//===========================================================================
+void CDlgMain::Init()
+{
+}
+
 
 void CDlgMain::OnBnClickedButtonQuit()
 {
-	// TODO: ここにコントロール通知ハンドラー コードを追加します。
+	End();
+}
+
+void CDlgMain::End(const int nEndCode)
+{
+	if (m_bEnding) { return; }
+	m_bEnding = TRUE;
+
+
+	EndDialog(nEndCode ? IDCANCEL : IDOK);
+}
+
+
+
+//===========================================================================
+// 強制終了処理
+//===========================================================================
+
+/// <summary>
+/// Windowsが終了(ユーザーがログアウト)するかも？
+/// </summary>
+/// <param name="bEnding">TRUE:終了(ログアウト)する/FALSE:しない</param>
+void CDlgMain::OnEndSession(BOOL bEnding)
+{
+	CDialogEx::OnEndSession(bEnding);
+
+	if (bEnding) { End(); }
 }
