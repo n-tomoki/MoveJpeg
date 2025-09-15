@@ -56,6 +56,7 @@ CDlgMain::CDlgMain(CWnd* pParent /*=nullptr*/)
 	m_hIcon = AfxGetApp()->LoadIconA(IDR_MAINFRAME);
 
 	BOOL m_bEnding = FALSE;
+	BOOL m_bInitDialog;
 }
 
 
@@ -77,6 +78,9 @@ BEGIN_MESSAGE_MAP(CDlgMain, CDialogEx)
 	ON_BN_CLICKED(IDCANCEL,&CDlgMain::OnBnClickedCancel)
 	ON_BN_CLICKED(IDC_BUTTON_QUIT,&CDlgMain::OnBnClickedButtonQuit)
 	ON_WM_ENDSESSION()
+	ON_WM_GETMINMAXINFO()
+	ON_WM_SIZE()
+	ON_WM_MOVE()
 END_MESSAGE_MAP()
 
 
@@ -112,6 +116,8 @@ BOOL CDlgMain::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 小さいアイコンの設定
 
 	Init();
+	InitWindowSize();
+	InitWindowPos();
 
 	return TRUE;  // フォーカスをコントロールに設定した場合を除き、TRUE を返します。
 }
@@ -220,4 +226,138 @@ void CDlgMain::OnEndSession(BOOL bEnding)
 	CDialogEx::OnEndSession(bEnding);
 
 	if (bEnding) { End(); }
+}
+
+
+//================================================================================
+// ダイアログのアイティムを移動する
+// ウインドウ位置を保存＆復元
+//================================================================================
+
+/// <summary>最初のウインドウ位置を保存</summary>
+void CDlgMain::InitWindowSize()
+{
+	CRect rc;
+	GetWindowRect(rc) ; m_sizeDlgMin = rc.Size();
+	ScreenToClient(rc); m_sizeDlgOld = rc.Size();
+
+	m_bInitDialog = TRUE;
+}
+
+
+/// <summary>最小のウインドウサイズ</summary>
+void CDlgMain::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
+{
+	CDialogEx::OnGetMinMaxInfo(lpMMI);
+
+	if (m_bInitDialog) {
+		lpMMI->ptMinTrackSize.x = m_sizeDlgMin.cx;
+		lpMMI->ptMinTrackSize.y = m_sizeDlgMin.cy;
+		// lpMMI->ptMaxTrackSize.x = m_sizeDlgMin.cx;
+		// lpMMI->ptMaxTrackSize.y = m_sizeDlgMin.cy;
+	}
+}
+
+
+/// <summary>
+/// アイテムの移動
+/// </summary>
+/// <param name="uID">アイテムコード</param>
+/// <param name="l">左上の移動距離</param>
+/// <param name="t">左下の移動距離</param>
+/// <param name="r">右上の移動距離</param>
+/// <param name="b">右下の移動距離</param>
+void CDlgMain::MoveDlgItem(const UINT uID, const int l, const int t, const int r, const int b)
+{
+	CRect rc;
+
+	GetDlgItem(uID)->GetWindowRect(rc);
+	ScreenToClient(rc);
+	rc.InflateRect(-l, -t, r, b);
+	GetDlgItem(uID)->MoveWindow(rc);
+}
+
+
+/// <summary>ダイアログのサイズが変更された</summary>
+void CDlgMain::OnSize(UINT nType, int cx, int cy)
+{
+	CDialogEx::OnSize(nType, cx, cy);
+
+	switch (nType) {
+	case SIZE_MINIMIZED:
+	//	ShowWindow(SW_MINIMIZE);  <--- アイコン化
+	//	ShowWindow(SW_HIDE);      <--- アイコン化
+		break;
+		
+	case SIZE_RESTORED:
+		if (m_bInitDialog && !IsIconic()) {
+			CRect rcNew;
+			GetWindowRect(rcNew);
+			ScreenToClient(rcNew);
+			int dx = rcNew.Width() - m_sizeDlgOld.cx;
+			int dy = rcNew.Height() - m_sizeDlgOld.cy;
+			m_sizeDlgOld = rcNew.Size();
+
+
+//			MoveDlgItem(IDC_EDIT_FILE_PATH  ,  0,  0, dx,  0); 
+//			MoveDlgItem(IDC_BUTTON_FILE_PATH, dx,  0, dx,  0); 
+			MoveDlgItem(IDC_BUTTON_QUIT     , dx,  0, dx, dy);
+//			MoveDlgItem(IDC_BUTTON_GO       ,  0,  0, dx, dy);
+
+			SaveWindowPos();
+
+			Invalidate(FALSE);
+		}
+		break;
+	}
+}
+
+/// <summary>
+/// ウインドウが移動された
+/// </summary>
+/// <param name="x">移動量</param>
+/// <param name="y">移動量</param>
+void CDlgMain::OnMove(int x, int y)
+{
+	CDialogEx::OnMove(x, y);
+	SaveWindowPos();
+}
+
+
+/// <summary>ウインドウ位置の保存</summary>
+void CDlgMain::SaveWindowPos()
+{
+	if (m_bInitDialog && !IsIconic()) {
+		CRect rc;
+		GetWindowRect(rc);
+		App.WriteParamFileInt(m_pszWindowPos, _T("x") , rc.left);
+		App.WriteParamFileInt(m_pszWindowPos, _T("y") , rc.top);
+		App.WriteParamFileInt(m_pszWindowPos, _T("cx"), rc.Width());
+		App.WriteParamFileInt(m_pszWindowPos, _T("cy"), rc.Height());
+	}
+}
+
+
+/// <summary>ウインドウ位置の移動</summary>
+void CDlgMain::InitWindowPos()
+{
+	int nVirtualPosX = GetSystemMetrics(SM_XVIRTUALSCREEN);
+	int nVirtualPosY = GetSystemMetrics(SM_YVIRTUALSCREEN);
+	int nViewX       = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+	int nViewY       = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+
+	int x  = App.GetParamFileInt(m_pszWindowPos, _T("x") );
+	int y  = App.GetParamFileInt(m_pszWindowPos, _T("y") );
+	int cx = App.GetParamFileInt(m_pszWindowPos, _T("cx"));
+	int cy = App.GetParamFileInt(m_pszWindowPos, _T("cy"));
+
+	CRect rtVirtual = CRect(nVirtualPosX, nVirtualPosY, nVirtualPosX + nViewX, nVirtualPosY + nViewY);
+
+	// ディスプレイ内にウインドウの左上が無い場合は、ウインドウの移動はしない。
+	if (rtVirtual.PtInRect(CPoint(x,y)) == 0 || GetAsyncKeyState(VK_SHIFT) & 0x8000) { return; }
+
+	// 表示するウインドウサイズが、初期値のウィンドウサイズより小さい場合は、ウインドウの移動はしない
+	if (m_sizeDlgMin.cx > cx || m_sizeDlgMin.cy > cy) { return; }
+
+	MoveWindow(x, y, cx, cy);
 }

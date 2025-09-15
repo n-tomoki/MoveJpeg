@@ -32,6 +32,20 @@ protected:
 
 
 
+	// ダイアログのアイティムを移動する
+protected:
+	BOOL         m_bInitDialog;
+	CSize        m_sizeDlgMin;
+	CSize        m_sizeDlgOld;
+	const TCHAR *m_pszWindowPos = _T("WindowPos");
+
+	void InitWindowSize();
+	void InitWindowPos();
+	void SaveWindowPos();
+	void MoveDlgItem(const UINT uID, const int l, const int t, const int r, const int b);
+
+
+
 protected:
 	// 生成された、メッセージ割り当て関数
 	virtual BOOL OnInitDialog();
@@ -44,4 +58,7 @@ public:
 	afx_msg void OnBnClickedCancel();
 	afx_msg void OnBnClickedButtonQuit();
 	afx_msg void OnEndSession(BOOL bEnding);
+	afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
+	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnMove(int x, int y);
 };
