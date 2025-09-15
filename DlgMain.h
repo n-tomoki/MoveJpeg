@@ -5,6 +5,9 @@
 #pragma once
 
 #include "Gv.h"
+#include "File.h"
+#include "SearchFile.h"
+
 
 // CDlgMain ダイアログ
 class CDlgMain : public CDialogEx
@@ -35,9 +38,9 @@ protected:
 
 	// GV.EXE関係
 	CGv *m_pGv;
-
 	void InitGv();
 
+	CSearchFile *m_pScan;
 
 
 	// ダイアログのアイティムを移動する
@@ -69,4 +72,7 @@ public:
 	afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnMove(int x, int y);
+	afx_msg void OnDropFiles(HDROP hDropInfo);
+	afx_msg void OnBnClickedButtonSelectPath();
+	afx_msg void OnBnClickedButtonScanFile();
 };

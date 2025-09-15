@@ -442,3 +442,128 @@ BOOL CApp::RegWriteParamFileHex(const char *pszSection, const char *pszEntry, co
 	return WriteProfileStringA(pszSection, pszEntry, sz);
 }
 /////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////////
+//-------------------------------------------------------------------------------
+// フォルダの選択
+//-------------------------------------------------------------------------------
+#include "shlobj.h"
+
+int CALLBACK BrowseCallbackProc(HWND hwnd,UINT uMsg,LPARAM lParam,LPARAM lpData);
+
+/// <summary>
+/// フォルダを選択する
+/// </summary>
+/// <param name="strPath">フォルダ</param>
+/// <param name="hWnd">hWnd</param>
+/// <returns>失敗すると「0」以外が返る</returns>
+int CApp::SelectFolder(CString &strPath, HWND hWnd)
+{
+	int nErr = 1;
+	BROWSEINFO bi;
+	char szDir[MAX_PATH+1];
+	LPITEMIDLIST pidl;
+	LPMALLOC pMalloc;
+
+	strcpy_s(szDir, strPath);	// フォルダ参照の初期値をセットする。
+								// szDir[0] = '\0'にするとマイコンピューターになる
+
+	if (SUCCEEDED(SHGetMalloc(&pMalloc))) {
+
+		RtlZeroMemory(&bi,sizeof(bi));
+		bi.hwndOwner = hWnd;
+
+//		フォルダ参照ダイアログの親ウィンドウのハンドルです。
+//		NULLにすると、モードレスになってしまうみたいです(^^;
+
+		bi.lpszTitle ="どのフォルダを選びますか？";
+
+//		表示する文字列です。
+
+		bi.pszDisplayName = szDir;
+		bi.pidlRoot       = NULL;
+
+
+//		参照フォルダのツリーのルートです。
+//		VCTIPS54、特殊フォルダ名の正規の取得方法の
+//		とりあえずITEMIDLISTへ取得して....
+//		SHGetSpecialFolderLocation(GetDesktopWindow()->m_hWnd,CSIDL_DESKTOP,&pItemIDList);
+//		で得たものを指定できます。
+
+		bi.ulFlags = BIF_RETURNONLYFSDIRS|BIF_USENEWUI/*|BIF_SHAREABLE*/|BIF_NONEWFOLDERBUTTON;	// 2000/XP以降
+
+//		オプションです。以下の通り。(OR演算可能)
+//		(0x0001)BIF_RETURNONLYFSDIRS    ファイルシステムディレクトリのみを返します。
+//		(0x0002)BIF_DONTGOBELOWDOMAIN   ドメインのネットワークフォルダを含みません。
+//		(0x0004)BIF_STATUSTEXT          ダイアログボックスにステータス領域を表示します。
+//		                                コールバック関数はダイアログボックスにメッセージを送ることで表示テキストを設定することができます。
+//		(0x0008)BIF_RETURNFSANCESTORS   ファイルシステムがもととなっているもののみを返します。
+//		(0x0010)BIF_EDITBOX             Version 4.71 以降
+//		                                ユーザーがアイテム名を書き込むことができるエディットコントロールを表示します。
+//		(0x0020)BIF_VALIDATE            Version 4.71 以降
+//		                                ユーザーがエディットコントロールに無効な名前を入力した場合に、
+//		                                BFFM_VALIDATEFAILED メッセージとともにコールバック関数が呼び出されます。 
+//		                                BIF_EDITBOX フラグが指定されていない場合は、このフラグは無視されます。
+//		(0x0040)BIF_NEWDIALOGSTYLE      Version 5.0 以降
+//		                                新しいユーザーインターフェースを使用します。
+//		                                従来のダイアログボックスよりも大きい、リサイズ可能なダイアログボックスが表示され、
+//		                                ダイアログボックスへのドラッグアンドドロップ、再指定、ショートカットメニュー、
+//		                                新しいフォルダ作成、削除、その他のショートカットメニューコマンドなどの機能が追加されます。
+//		                                このフラグを使用するには、あらかじめ COM を初期化しておく必要があります。
+//		(0x0050)BIF_USENEWUI            Version 5.0 以降
+//		                                エディットコントロールを持つ、新しいユーザーインターフェースを使用します。
+//		                                このフラグは BIF_EDITBOX | BIF_NEWDIALOGSTYLE と同等です。
+//		                                このフラグを使用するには、あらかじめ COM を初期化しておく必要があります。
+//		(0x0080)BIF_BROWSEINCLUDEURLS   Version 5.0 以降
+//		                                URL を表示することができるようにします。 
+//		                                BIF_USENEWUI と BIF_BROWSEINCLUDEFILES が同時に指定されていなければなりません。
+//		                                これらのフラグが設定されているとき、選択されたアイテムを含むフォルダがサポートする場合にのみ、 
+//		                                URL が表示されます。アイテムの属性を問い合わせるためにフォルダの IShellFolder::GetAttributesOf 
+//		                                メソッドが呼び出されたときに、フォルダによって SFGAO_FOLDER 属性フラグが設定された場合にのみ、
+//		                                URL が表示されます。
+//		(0x0100)BIF_UAHINT              Version 5.0 以降
+//		                                エディットコントロールの代わりに、ダイアログボックスに用法ヒントを追加します。
+//		                                BIF_NEWDIALOGSTYLE フラグとともに指定しなければなりません。
+//		(0x0200)BIF_NONEWFOLDERBUTTON   Version 5.0 以降
+//		                                ダイアログボックスに「新しいフォルダ」ボタンを表示しないようにします。 
+//		                                BIF_NEWDIALOGSTYLE フラグとともに指定しなければなりません。
+//		(0x1000)BIF_BROWSEFORCOMPUTER   コンピュータのみを返します。
+//		(0x2000)BIF_BROWSEFORPRINTER    プリンタのみを返します。
+//		(0x4000)BIF_BROWSEINCLUDEFILES  Version 4.71 以降： フォルダとファイルを表示します。
+//		(0x8000)BIF_SHAREABLE           Version 5.0 以降 ： リモートシステム上にある共有可能リソースを表示できるようにします。 
+//		                                BIF_USENEWUI フラグとともに指定しなければなりません。
+
+//		フォルダ参照の初期値を有効にする為にコールバック関数を定義する
+		bi.lpfn   = &BrowseCallbackProc;		// コールバック関数を指定する
+		bi.lParam = (LPARAM)szDir;				// コールバックに渡す引数
+
+		HRESULT hr = OleInitialize(NULL);
+		if (hr == S_OK || hr == S_FALSE) {
+			// S_OK:成功/S_FALSE:初期化済み
+			pidl = SHBrowseForFolderA(&bi);
+			if (pidl) {
+				if (SHGetPathFromIDListA(pidl,szDir)) {
+					strPath = szDir;
+					nErr = 0;
+				}
+				pMalloc->Free(pidl);
+				pMalloc->Release();
+			}
+			OleUninitialize();
+		}
+	}
+	return nErr;
+}
+
+
+// 初期フォルダを指定するには、この関数にBFFM_INITIALIZEDメッセージが来たときウインドウに、BFFM_SETSELECTIONメッセージを送ります。
+// そのとき、wParamをFALSEにしたとき、lParamにはITEMIDLISTのポインタを指定し、 
+// TRUEにしたときは、フォルダのパスの格納されている文字列変数のポインタを指定します。
+int CALLBACK BrowseCallbackProc(HWND hwnd,UINT uMsg,LPARAM lParam,LPARAM lpData)
+{
+    if(uMsg == BFFM_INITIALIZED){
+        ::SendMessage(hwnd, BFFM_SETSELECTION, (WPARAM)TRUE, lpData);
+    }
+    return 0;
+}
+

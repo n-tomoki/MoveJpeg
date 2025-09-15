@@ -59,12 +59,14 @@ CDlgMain::CDlgMain(CWnd* pParent /*=nullptr*/)
 	m_bInitDialog = FALSE;
 
 	m_pGv   = NULL;
+	m_pScan = NULL;
 }
 
 
 CDlgMain::~CDlgMain()
 {
 	delete m_pGv;
+	delete m_pScan;
 }
 
 
@@ -84,6 +86,9 @@ BEGIN_MESSAGE_MAP(CDlgMain, CDialogEx)
 	ON_WM_GETMINMAXINFO()
 	ON_WM_SIZE()
 	ON_WM_MOVE()
+	ON_WM_DROPFILES()
+	ON_BN_CLICKED(IDC_BUTTON_SELECT_PATH,&CDlgMain::OnBnClickedButtonSelectPath)
+	ON_BN_CLICKED(IDC_BUTTON_SCAN_FILE,&CDlgMain::OnBnClickedButtonScanFile)
 END_MESSAGE_MAP()
 
 
@@ -117,6 +122,8 @@ BOOL CDlgMain::OnInitDialog()
 	//  Framework は、この設定を自動的に行います。
 	SetIcon(m_hIcon, TRUE);			// 大きいアイコンの設定
 	SetIcon(m_hIcon, FALSE);		// 小さいアイコンの設定
+
+	DragAcceptFiles();
 
 	Init();
 	InitWindowSize();
@@ -197,8 +204,18 @@ void CDlgMain::OnBnClickedCancel()
 //===========================================================================
 void CDlgMain::Init()
 {
+	CString str = App.GetParamFileString("PARAM","SCAN_PATH","");
+
+	CEdit *pEdit = (CEdit*)GetDlgItem(IDC_EDIT_SCANPATH);
+
+	pEdit->SetLimitText(1024);
+	pEdit->SetWindowTextA(str);
+
+
 	m_pGv = new CGv;
 	if (!m_pGv->Init()) { InitGv(); }
+
+	m_pScan = new CSearchFile;
 }
 
 
@@ -222,12 +239,81 @@ void CDlgMain::End(const int nEndCode)
 	if (m_bEnding) { return; }
 	m_bEnding = TRUE;
 
+	CString str;
+
+	GetDlgItem(IDC_EDIT_SCANPATH)->GetWindowTextA(str);
+
+	App.WriteParamFileString("PARAM","SCAN_PATH", str);
+
 	m_pGv->End();
 
 	EndDialog(nEndCode ? IDCANCEL : IDOK);
 }
 
 
+//===========================================================================
+//===========================================================================
+
+/// <summary>
+/// 検索フォルダの選択
+/// </summary>
+void CDlgMain::OnBnClickedButtonSelectPath()
+{
+	CString str;
+
+	GetDlgItem(IDC_EDIT_SCANPATH)->GetWindowTextA(str);
+
+	if (App.SelectFolder(str, this->m_hWnd)) {
+		GetDlgItem(IDC_EDIT_SCANPATH)->SetWindowTextA(str);
+	}
+}
+
+
+
+void CDlgMain::OnBnClickedButtonScanFile()
+{
+	CString str;
+
+	GetDlgItem(IDC_EDIT_SCANPATH)->GetWindowTextA(str);
+
+	if (File::IsExistFolder(str) == FALSE) {
+		MessageBox("フォルダが存在しません", "確認", MB_ICONINFORMATION | MB_OK);
+		return;
+	}
+
+	m_pScan->Init();
+	m_pScan->SetScanExt(".jpeg");
+	m_pScan->SetScanExt(".jpg");
+	m_pScan->SetScanExt(".png");
+	m_pScan->Main(str);
+}
+
+
+
+/// <summary>
+/// “WM_DROPFILES”のメッセージ処理をする 
+/// </summary>
+/// <param name="hDropInfo">ドロップ情報</param>
+void CDlgMain::OnDropFiles(HDROP hDropInfo)
+{
+	int nSize = DragQueryFileA(hDropInfo, -1, NULL, 0);
+	char szFull[MAX_PATH + 5];
+
+
+	// １つの場合
+	int nLen = DragQueryFileA(hDropInfo, 0, szFull, MAX_PATH);
+	if (!nLen) { return; }
+
+	if (File::IsExistFile(szFull)) {
+		MessageBox("フォルダを指定して下さい", "確認", MB_ICONINFORMATION | MB_OK);
+		return;
+	}
+
+	GetDlgItem(IDC_EDIT_SCANPATH)->SetWindowTextA(szFull);
+
+	// ドロップされたファイルの情報を解放する
+	DragFinish(hDropInfo);
+}
 
 //===========================================================================
 // 強制終了処理
@@ -377,3 +463,4 @@ void CDlgMain::InitWindowPos()
 
 	MoveWindow(x, y, cx, cy);
 }
+

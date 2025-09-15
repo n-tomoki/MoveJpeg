@@ -56,6 +56,8 @@ public:
 	BOOL    AnalyzePathFolder(const char *pszPath);
 	// メッセージ処理
 	BOOL    DoBackground();
+	/// フォルダを選択する
+	int     SelectFolder(CString &strPath, HWND hWnd);
 
 
 public:

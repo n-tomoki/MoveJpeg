@@ -142,7 +142,7 @@ int CGv::SendCmd(const char *pszBuf)
 
 	hRet = DdeClientTransaction(
 		(LPBYTE)pszBuf,      // クライアントデータ
-		strlen(pszBuf) + 1,  // データサイズ
+		(DWORD)strlen(pszBuf) + 1,  // データサイズ
 		m_hConv,             // 通信ハンドル
 		0,                   // データ項目
 		0,                   // クリップボードフォーマット
