@@ -60,6 +60,8 @@ CDlgMain::CDlgMain(CWnd* pParent /*=nullptr*/)
 
 	m_pGv   = NULL;
 	m_pScan = NULL;
+
+	m_nDispNumber = 0;
 }
 
 
@@ -263,7 +265,7 @@ void CDlgMain::OnBnClickedButtonSelectPath()
 
 	GetDlgItem(IDC_EDIT_SCANPATH)->GetWindowTextA(str);
 
-	if (App.SelectFolder(str, this->m_hWnd)) {
+	if (!App.SelectFolder(str, this->m_hWnd)) {
 		GetDlgItem(IDC_EDIT_SCANPATH)->SetWindowTextA(str);
 	}
 }
@@ -286,8 +288,34 @@ void CDlgMain::OnBnClickedButtonScanFile()
 	m_pScan->SetScanExt(".jpg");
 	m_pScan->SetScanExt(".png");
 	m_pScan->Main(str);
+
+	m_nDispNumber = 0;
+	UpdateDispNumber();
 }
 
+
+
+/// <summary>
+/// 現在の表示番号を更新する
+/// </summary>
+void CDlgMain::UpdateDispNumber()
+{
+	m_nDispMaxNum = m_pScan->GetSize();
+	CString strDispMsg;
+	CString strFilePath;
+
+	if (m_pScan->GetSize() > 0) {
+		strDispMsg.Format("(%04d/%04d)", m_nDispNumber, m_nDispMaxNum);
+
+		if (!m_pScan->GetFilePath(m_nDispNumber, strFilePath)) {
+			m_pGv->FileOpen(strFilePath);
+		}
+	} else {
+		strDispMsg.Format("(xxxx/xxxx)");
+	}
+
+	GetDlgItem(IDC_STATIC_DISP_NUMBER)->SetWindowTextA(strDispMsg);
+}
 
 
 /// <summary>
@@ -401,10 +429,11 @@ void CDlgMain::OnSize(UINT nType, int cx, int cy)
 			m_sizeDlgOld = rcNew.Size();
 
 
-//			MoveDlgItem(IDC_EDIT_FILE_PATH  ,  0,  0, dx,  0); 
-//			MoveDlgItem(IDC_BUTTON_FILE_PATH, dx,  0, dx,  0); 
-			MoveDlgItem(IDC_BUTTON_QUIT     , dx,  0, dx, dy);
-//			MoveDlgItem(IDC_BUTTON_GO       ,  0,  0, dx, dy);
+			MoveDlgItem(IDC_EDIT_SCANPATH     ,  0,  0, dx,  0); 
+			MoveDlgItem(IDC_BUTTON_SELECT_PATH, dx,  0, dx,  0); 
+			MoveDlgItem(IDC_BUTTON_SCAN_FILE  , dx,  0, dx,  0); 
+			MoveDlgItem(IDC_BUTTON_QUIT       , dx,  0, dx, dy);
+//			MoveDlgItem(IDC_BUTTON_GO         ,  0,  0, dx, dy);
 
 			SaveWindowPos();
 

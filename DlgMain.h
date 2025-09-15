@@ -35,6 +35,11 @@ protected:
 	void Init();
 	void End(const int nEndCode = 0);
 
+	int m_nDispNumber;
+	int m_nDispMaxNum;
+
+	void UpdateDispNumber();
+
 
 	// GV.EXE関係
 	CGv *m_pGv;
