@@ -103,7 +103,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="DlgMain.h" />
+    <ClInclude Include="File.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="Gv.h" />
+    <ClInclude Include="Memory.h" />
     <ClInclude Include="MoveJpeg.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
@@ -111,6 +114,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DlgMain.cpp" />
+    <ClCompile Include="File.cpp" />
+    <ClCompile Include="Gv.cpp" />
+    <ClCompile Include="Memory.cpp" />
     <ClCompile Include="MoveJpeg.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

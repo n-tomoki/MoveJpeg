@@ -55,13 +55,16 @@ CDlgMain::CDlgMain(CWnd* pParent /*=nullptr*/)
 {
 	m_hIcon = AfxGetApp()->LoadIconA(IDR_MAINFRAME);
 
-	BOOL m_bEnding = FALSE;
-	BOOL m_bInitDialog;
+	m_bEnding     = FALSE;
+	m_bInitDialog = FALSE;
+
+	m_pGv   = NULL;
 }
 
 
 CDlgMain::~CDlgMain()
 {
+	delete m_pGv;
 }
 
 
@@ -194,6 +197,18 @@ void CDlgMain::OnBnClickedCancel()
 //===========================================================================
 void CDlgMain::Init()
 {
+	m_pGv = new CGv;
+	if (!m_pGv->Init()) { InitGv(); }
+}
+
+
+/// <summary>「GV.EXE」の初期設定</summary>
+void CDlgMain::InitGv()
+{
+	m_pGv->AddFileList("OFF");
+	m_pGv->AutoAdjustMode("ON", "ON", "ON", "ON");
+	m_pGv->DispMsg("OFF");
+	m_pGv->Quantize("AUTO");
 }
 
 
@@ -207,6 +222,7 @@ void CDlgMain::End(const int nEndCode)
 	if (m_bEnding) { return; }
 	m_bEnding = TRUE;
 
+	m_pGv->End();
 
 	EndDialog(nEndCode ? IDCANCEL : IDOK);
 }

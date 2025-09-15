@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "Gv.h"
 
 // CDlgMain ダイアログ
 class CDlgMain : public CDialogEx
@@ -27,8 +28,15 @@ protected:
 	HICON m_hIcon;
 	BOOL  m_bEnding;
 
+
 	void Init();
 	void End(const int nEndCode = 0);
+
+
+	// GV.EXE関係
+	CGv *m_pGv;
+
+	void InitGv();
 
 
 
