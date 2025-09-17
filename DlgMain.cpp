@@ -62,6 +62,7 @@ CDlgMain::CDlgMain(CWnd* pParent /*=nullptr*/)
 	m_pScan = NULL;
 
 	m_nDispNumber = 0;
+	m_nDispMaxNum = 0;
 }
 
 
@@ -290,6 +291,7 @@ void CDlgMain::OnBnClickedButtonScanFile()
 	m_pScan->Main(str);
 
 	m_nDispNumber = 0;
+	m_nDispMaxNum = m_pScan->GetSize();
 	UpdateDispNumber();
 }
 
@@ -300,7 +302,6 @@ void CDlgMain::OnBnClickedButtonScanFile()
 /// </summary>
 void CDlgMain::UpdateDispNumber()
 {
-	m_nDispMaxNum = m_pScan->GetSize();
 	CString strDispMsg;
 	CString strFilePath;
 

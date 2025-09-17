@@ -9,8 +9,8 @@ protected:
 	HSZ m_hszTopic;
 	HCONV m_hConv;
 
+	BOOL  m_bInit;
 	DWORD m_dwInst;
-	BOOL  m_bActive;
 	CString m_strGvPath;
 
 	void GetProfile();
@@ -21,9 +21,9 @@ protected:
 	BOOL GvOpen();
 	BOOL GvClose();
 
-	int SendCmd(const char *PszBuf);
-	int SendRequestText(const char *pszBuf, CString &strAns);
-	int CheckDIBRequest();
+	int  SendCmd(const char *PszBuf);
+	int  SendRequestText(const char *pszBuf, CString &strAns);
+	BOOL CheckDIBRequest();
 
 	int DDE_Start();
 	int DDE_End();
@@ -38,6 +38,7 @@ public:
 
 	BOOL Init();
 	void End();
+	BOOL ReStart();
 
 	// 画像イメージをできるだけ高速に(縦横どちらかが指定サイズ以上の最小限の大きさで）表示する。
 	int  ViewDraftEx(const char *pszFileName, const char cFlag = ' ', const int nWidth = -1, const int nHeight = -1);

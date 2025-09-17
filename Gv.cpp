@@ -9,16 +9,20 @@
 //===========================================================================
 // 開始＆終了処理
 //===========================================================================
+
+/// <summary>コンストラクタ</summary>
 CGv::CGv()
 {
-	m_dwInst  = 0;
-	m_bActive = FALSE;
+	m_bInit  = FALSE;
+	m_dwInst = 0;
 
 	m_hszService = 0;
 	m_hszTopic   = 0;
 	m_hConv      = 0;
 }
 
+
+/// <summary>デストラクタ</summary>
 CGv::~CGv()
 {
 	End();
@@ -32,10 +36,10 @@ CGv::~CGv()
 /// <summary>
 /// 初期化処理
 /// </summary>
-/// <returns>FALSE:成功/FALSE:失敗</returns>
+/// <returns>FALSE:成功/TRUE:失敗</returns>
 BOOL CGv::Init()
 {
-	if (m_bActive)   { return FALSE; }
+	if (m_bInit) { return FALSE; }
 
 	GetProfile();
 	if (GvScan())    { return TRUE; }
@@ -43,7 +47,7 @@ BOOL CGv::Init()
 	if (GvOpen())    { return TRUE; }
 	if (DDE_Start()) { return TRUE; }
 
-	m_bActive = TRUE;
+	m_bInit = TRUE;
 
 	return FALSE;
 }
@@ -54,13 +58,9 @@ BOOL CGv::Init()
 /// </summary>
 void CGv::End()
 {
-	if (!m_bActive) { return; }
-
 	CheckDIBRequest();
 	DDE_End();
 	GvClose();
-
-	m_bActive = FALSE;
 }
 
 //---------------------------------------------------------------------------
@@ -113,10 +113,11 @@ int CGv::DDE_Start()
 int CGv::DDE_End()
 {
 	if (m_hConv) {
-		if(DdeFreeStringHandle(m_dwInst, m_hszService) == 0) { return 1; }
-		if(DdeFreeStringHandle(m_dwInst, m_hszTopic) == 0)   { return 1; }
-		if(DdeDisconnect(m_hConv) == 0)                      { return 1; }
-		m_hConv = 0;
+		DdeFreeStringHandle(m_dwInst, m_hszService);
+		DdeFreeStringHandle(m_dwInst, m_hszTopic);
+		DdeDisconnect(m_hConv);
+		m_hConv  = 0;
+		m_dwInst = 0;
 	}
 
 	return 0;
@@ -125,20 +126,30 @@ int CGv::DDE_End()
 //===========================================================================
 // ＧＶ関係
 //===========================================================================
+
+/// <summary>
+/// コールバック関数
+/// </summary>
 HDDEDATA CGv::DdemlCallback(UINT uType, UINT uFmt, HCONV hconv, HSZ hsz1, HSZ hsz2, HDDEDATA hdata, DWORD dwData1, DWORD dwData2)
 {
 	return (HDDEDATA)NULL;
 }
 
 
+/// <summary>
+/// コマンド送信
+/// </summary>
+/// <param name="pszBuf">文字列</param>
+/// <returns>0:成功/1:失敗</returns>
 int CGv::SendCmd(const char *pszBuf)
 {
 	int nErr = 0;
 	HDDEDATA hRet;
 
-	if (!m_bActive) { Init();   }
-	if (!m_bActive) { return 1; }
-    if (!m_hConv)   { return 1; }
+	if (!m_bInit)   { Init();   }
+	if (!m_bInit)   { return 1; }
+	if (!GvCheck()) { return 1; }
+	if (!m_hConv)   { return 1; }
 
 	hRet = DdeClientTransaction(
 		(LPBYTE)pszBuf,      // クライアントデータ
@@ -160,14 +171,21 @@ int CGv::SendCmd(const char *pszBuf)
 }
 
 
+/// <summary>
+/// 文字列の受信
+/// </summary>
+/// <param name="pszBuf">コマンド送信</param>
+/// <param name="strAns">受信文字列</param>
+/// <returns>0:成功/1:失敗</returns>
 int CGv::SendRequestText(const char *pszBuf, CString &strAns)
 {
 	int nErr = 0;
 	HDDEDATA hRet;
 	HSZ hszRequest;
 
-	if (!m_bActive) { Init();   }
-	if (!m_bActive) { return 1; }
+	if (!m_bInit)   { Init();   }
+	if (!m_bInit)   { return 1; }
+	if (!GvCheck()) { return 1; }
 	if (!m_hConv)   { return 1; }
 
 	hszRequest = DdeCreateStringHandleA(m_dwInst, pszBuf, CP_WINANSI);
@@ -202,24 +220,28 @@ int CGv::SendRequestText(const char *pszBuf, CString &strAns)
 }
 
 
-int CGv::CheckDIBRequest()
+/// <summary>
+/// 「GV.EXE」の状態を返す
+/// </summary>
+/// <returns>FALSE:OK(動いてない)/TRUE:WAIT</returns>
+BOOL CGv::CheckDIBRequest()
 {
-	if (!GvCheck()) { return 0; }
+	if (!GvCheck()) { return FALSE; }
 
-	int nErr = 1;
-	int nCnt = 20;
+	BOOL bRet = TRUE;
+	int nCnt  = 20;
 	CString str;
 
 	while (--nCnt) {
 		int n = SendRequestText("DIBRequest", str);
 		if (n == 0) {
-			if (str.Find("OK")   != -1) { nErr = 0; break; }
+			if (str.Find("OK")   != -1) { bRet = FALSE; break; }
 			if (str.Find("WAIT") != -1) { nCnt = 20; }
 		}
 		Sleep(100);
 	}
 
-	return nErr;
+	return bRet;
 }
 
 
@@ -328,6 +350,25 @@ BOOL CGv::GvClose()
 			Sleep(100);
 		}
 	} while(--nLoop > 0 && bRun);
+
+	return FALSE;
+}
+
+
+/// <summary>
+/// 「GV.EXE」を再起動させる
+/// </summary>
+/// <returns>FALSE:成功/TRUE:失敗</returns>
+BOOL CGv::ReStart()
+{
+	if (!m_bInit) {
+		if (Init()) { return TRUE; }
+	} else {
+		DDE_End();
+		if (GvClose())   { return TRUE; }
+		if (GvOpen())    { return TRUE; }
+		if (DDE_Start()) { return TRUE; }
+	}
 
 	return FALSE;
 }
