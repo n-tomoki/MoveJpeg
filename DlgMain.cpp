@@ -92,6 +92,10 @@ BEGIN_MESSAGE_MAP(CDlgMain, CDialogEx)
 	ON_WM_DROPFILES()
 	ON_BN_CLICKED(IDC_BUTTON_SELECT_PATH,&CDlgMain::OnBnClickedButtonSelectPath)
 	ON_BN_CLICKED(IDC_BUTTON_SCAN_FILE,&CDlgMain::OnBnClickedButtonScanFile)
+	ON_BN_CLICKED(IDC_BUTTON_FOLDER1, &CDlgMain::OnBnClickedButtonFolder1)
+	ON_BN_CLICKED(IDC_BUTTON_FOLDER2, &CDlgMain::OnBnClickedButtonFolder2)
+	ON_BN_CLICKED(IDC_BUTTON_FOLDER3, &CDlgMain::OnBnClickedButtonFolder3)
+	ON_BN_CLICKED(IDC_BUTTON_FOLDER4, &CDlgMain::OnBnClickedButtonFolder4)
 END_MESSAGE_MAP()
 
 
@@ -214,11 +218,13 @@ void CDlgMain::Init()
 	pEdit->SetLimitText(1024);
 	pEdit->SetWindowTextA(str);
 
-
 	m_pGv = new CGv;
 	if (!m_pGv->Init()) { InitGv(); }
 
 	m_pScan = new CSearchFile;
+
+
+	InitFolderButton();
 }
 
 
@@ -232,11 +238,73 @@ void CDlgMain::InitGv()
 }
 
 
+/// <summary>フォルダボタンの初期化</summary>
+void CDlgMain::InitFolderButton()
+{
+	BOOL bRun = TRUE;
+	int  nCnt = 0;
+	char szKeyName[20];
+	char szKeyPath[20];
+	CString strName;
+	CString strPath;
+
+	do {
+		sprintf_s(szKeyName, "FolderName%02d", nCnt);
+		sprintf_s(szKeyPath, "FolderPath%02d", nCnt);
+		
+		strName = App.GetParamFileString("FOLDER", szKeyName);
+		strPath = App.GetParamFileString("FOLDER", szKeyPath);
+
+		App.WriteParamFileString("FOLDER", szKeyName, strName);
+		App.WriteParamFileString("FOLDER", szKeyPath, strPath);
+
+		if (strName.IsEmpty() || strPath.IsEmpty()) { break; }
+
+		int nLenName = strName.GetLength() + 1;
+		int nLenPath = strPath.GetLength() + 1;
+
+		SButtonBase *p = new SButtonBase();
+		p->m_pName     = new char[nLenName + 1];
+		p->m_pPath     = new char[nLenPath + 1];
+
+		strcpy_s(p->m_pName, nLenName, (const char *)strName);
+		strcpy_s(p->m_pPath, nLenPath, (const char *)strPath);
+
+		m_arrButton.Add((void *)p);
+		nCnt++;
+	} while (1); 
+
+
+	int i;
+	int nCode = IDC_BUTTON_FOLDER1;
+	int nSize = min((int)m_arrButton.GetSize(), 4);
+
+	for (i = 0; i < nSize; i++) {
+		SButtonBase *pBase = (SButtonBase *)m_arrButton.GetAt(i);
+
+		GetDlgItem(nCode)->SetWindowTextA(pBase->m_pName);
+		nCode++;
+	}
+
+	for (; i < 4; i++) {
+		GetDlgItem(nCode)->SetWindowTextA("-----");
+		GetDlgItem(nCode)->EnableWindow(FALSE);
+		nCode++;
+	}
+}
+
+
+/// <summary>「終わり」のボタンが押された</summary>
 void CDlgMain::OnBnClickedButtonQuit()
 {
 	End();
 }
 
+
+/// <summary>
+/// 終了処理
+/// </summary>
+/// <param name="nEndCode">終了コード[0]</param>
 void CDlgMain::End(const int nEndCode)
 {
 	if (m_bEnding) { return; }
@@ -250,7 +318,28 @@ void CDlgMain::End(const int nEndCode)
 
 	m_pGv->End();
 
+	ReleaseFolderButton();
+
 	EndDialog(nEndCode ? IDCANCEL : IDOK);
+}
+
+
+/// <summary>
+/// フォルダボタンのメモリ解放
+/// </summary>
+void CDlgMain::ReleaseFolderButton()
+{
+	int nSize = (int)m_arrButton.GetSize();
+
+	if (nSize > 0) {
+		for (int i = 0; i < nSize; i++) {
+			SButtonBase *p = (SButtonBase *)m_arrButton.GetAt(0);
+			delete []p->m_pName; p->m_pName = NULL;
+			delete []p->m_pPath; p->m_pPath = NULL;
+			delete p;
+			m_arrButton.RemoveAt(0);
+		}
+	}
 }
 
 
@@ -343,6 +432,47 @@ void CDlgMain::OnDropFiles(HDROP hDropInfo)
 	// ドロップされたファイルの情報を解放する
 	DragFinish(hDropInfo);
 }
+
+
+//===========================================================================
+// フォルダボタンの処理
+//===========================================================================
+
+/// <summary>
+/// 「フォルダ１」が押された
+/// </summary>
+void CDlgMain::OnBnClickedButtonFolder1()
+{
+	// TODO: ここにコントロール通知ハンドラー コードを追加します。
+}
+
+
+/// <summary>
+/// 「フォルダ２」が押された
+/// </summary>
+void CDlgMain::OnBnClickedButtonFolder2()
+{
+	// TODO: ここにコントロール通知ハンドラー コードを追加します。
+}
+
+
+/// <summary>
+/// 「フォルダ３」が押された
+/// </summary>
+void CDlgMain::OnBnClickedButtonFolder3()
+{
+	// TODO: ここにコントロール通知ハンドラー コードを追加します。
+}
+
+
+/// <summary>
+/// 「フォルダ４」が押された
+/// </summary>
+void CDlgMain::OnBnClickedButtonFolder4()
+{
+	// TODO: ここにコントロール通知ハンドラー コードを追加します。
+}
+
 
 //===========================================================================
 // 強制終了処理

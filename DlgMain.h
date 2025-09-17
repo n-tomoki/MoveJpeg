@@ -41,6 +41,28 @@ protected:
 	void UpdateDispNumber();
 
 
+	// フォルダボタン関係
+	struct SButtonBase {
+		char *m_pName;
+		char *m_pPath;
+
+		SButtonBase() {
+			m_pName = NULL;
+			m_pPath = NULL;
+		}
+		
+		virtual ~SButtonBase() {
+			if (m_pName != NULL) { delete []m_pName; }
+			if (m_pPath != NULL) { delete []m_pPath; }
+		}
+	};
+	CPtrArray m_arrButton;
+
+	void InitFolderButton();
+	void ReleaseFolderButton();
+
+
+
 	// GV.EXE関係
 	CGv *m_pGv;
 	void InitGv();
@@ -80,4 +102,8 @@ public:
 	afx_msg void OnDropFiles(HDROP hDropInfo);
 	afx_msg void OnBnClickedButtonSelectPath();
 	afx_msg void OnBnClickedButtonScanFile();
+	afx_msg void OnBnClickedButtonFolder1();
+	afx_msg void OnBnClickedButtonFolder2();
+	afx_msg void OnBnClickedButtonFolder3();
+	afx_msg void OnBnClickedButtonFolder4();
 };
