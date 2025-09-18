@@ -7,11 +7,9 @@ class CSearchFile {
 	/////////////////////////////////////////////////////////////////////////////
 	class CBase {
 	public:
-		BOOL m_bChg;
 		BOOL m_bDelete;
 		CString m_strFullPath;
 		CString m_strFileTitle;
-		CString m_strNewTitle;
 		unsigned long long m_dw64DateTime;
 
 		CBase();
@@ -32,15 +30,15 @@ private:
 	int  SearchMain(const char *pszPath, const BOOL bSubFolder);
 	void MakeSeachFullPath(CString &strFullPath, const char *pszPath);
 	int  GetExtSize();
-	int  GetScanExt(const int nNum, char *pExt, const int nBufSize);
-	int  CheckFileExt(const char *pszFileName);
+	BOOL GetScanExt(const int nNum, char *pExt, const int nBufSize);
+	BOOL CheckFileExt(const char *pszFileName);
 
 public:
 	void Init();
 	int  Main(const char *pszPath);
 
 	int  GetSize();
-	BOOL GetFilePath(const int nNum, CString &strFileName);
+	BOOL GetFilePath(const int nNum, CString &strFullPath);
 	BOOL GetFileTitle(const int nNum, CString &strFileName);
 	BOOL GetFileExt(const int nNum, CString &strExt);
 	BOOL GetChengTitel(const int nNum);

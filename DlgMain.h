@@ -9,6 +9,9 @@
 #include "SearchFile.h"
 
 
+#define SELECT_BUTTON_MAXNUM 4
+
+
 // CDlgMain ダイアログ
 class CDlgMain : public CDialogEx
 {
@@ -39,14 +42,20 @@ protected:
 	int m_nDispMaxNum;
 
 	void UpdateDispNumber();
+	BOOL GvFileOpen(const char *pszFileName);
 
 
 	// フォルダボタン関係
 	struct SButtonBase {
+		BOOL  m_bUse;
+		BOOL  m_bEnable;
 		char *m_pName;
 		char *m_pPath;
 
 		SButtonBase() {
+			m_bUse    = TRUE;
+			m_bEnable = TRUE;
+
 			m_pName = NULL;
 			m_pPath = NULL;
 		}
@@ -61,6 +70,7 @@ protected:
 	void InitFolderButton();
 	void ReleaseFolderButton();
 
+	void EnableButton(BOOL bEnable = TRUE);
 
 
 	// GV.EXE関係
@@ -106,4 +116,6 @@ public:
 	afx_msg void OnBnClickedButtonFolder2();
 	afx_msg void OnBnClickedButtonFolder3();
 	afx_msg void OnBnClickedButtonFolder4();
+	afx_msg void OnBnClickedButtonBack();
+	afx_msg void OnBnClickedButtonNext();
 };

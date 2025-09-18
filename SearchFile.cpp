@@ -10,7 +10,6 @@
 /////////////////////////////////////////////////////////////////////////////
 CSearchFile::CBase::CBase()
 {
-	m_bChg    = FALSE;
 	m_bDelete = FALSE;
 	
 	m_dw64DateTime = 0;
@@ -20,17 +19,21 @@ CSearchFile::CBase::CBase()
 //===========================================================================
 // 開始＆終了処理
 //===========================================================================
+
+/// <summary>コンストラクタ</summary>
 CSearchFile::CSearchFile()
 {
 }
 
 
+/// <summary>デストラクタ</summary>
 CSearchFile::~CSearchFile()
 {
 	End();
 }
 
 
+/// <summary>終了処理(メモリ解放)</summary>
 void CSearchFile::End()
 {
 	int i;
@@ -55,9 +58,11 @@ void CSearchFile::End()
 }
 
 
-//===========================================================================
+//---------------------------------------------------------------------------
 // 初期化
-//===========================================================================
+//---------------------------------------------------------------------------
+
+/// <summary>初期化</summary>
 void CSearchFile::Init()
 {
 	End();
@@ -67,6 +72,12 @@ void CSearchFile::Init()
 //===========================================================================
 // ファイルの検索
 //===========================================================================
+
+/// <summary>
+/// ファイルの検索
+/// </summary>
+/// <param name="pszSearchPath">検索フォルダ</param>
+/// <returns>0</returns>
 int CSearchFile::Main(const char *pszSearchPath)
 {
 	BOOL bSubFolder = FALSE;
@@ -81,6 +92,12 @@ int CSearchFile::Main(const char *pszSearchPath)
 }
 
 
+/// <summary>
+/// ファイルの検索(メイン)
+/// </summary>
+/// <param name="pszSearchPath">検索フォルダ</param>
+/// <param name="bSubFolder">サブ・フォルダも検索する？</param>
+/// <returns>0</returns>
 int CSearchFile::SearchMain(const char *pszSearchPath, const BOOL bSubFolder)
 {
 	BOOL bRun = TRUE;
@@ -125,6 +142,11 @@ int CSearchFile::SearchMain(const char *pszSearchPath, const BOOL bSubFolder)
 }
 
 
+/// <summary>
+/// 検索フォルダ・パスの作成
+/// </summary>
+/// <param name="strFullPath">検索フォルダ・パス</param>
+/// <param name="pszPath">検索フォルダ・パス</param>
 void CSearchFile::MakeSeachFullPath(CString &strFullPath, const char *pszPath)
 {
 	strFullPath = pszPath;
@@ -138,51 +160,73 @@ void CSearchFile::MakeSeachFullPath(CString &strFullPath, const char *pszPath)
 
 
 //===========================================================================
+// Getシリーズ
 //===========================================================================
+
+/// <summary>
+/// 記録データ数を返す
+/// </summary>
+/// <returns>データ数</returns>
 int CSearchFile::GetSize()
 {
 	return (int)m_arrFileName.GetSize();
 }
 
 
-BOOL CSearchFile::GetFilePath(const int nNum, CString &strFileName)
+/// <summary>
+/// ファイルパスを返す
+/// </summary>
+/// <param name="nNum">インデックス番号</param>
+/// <param name="strFullPath">ファイルパス</param>
+/// <returns>FALSE:成功/TRUE:失敗</returns>
+BOOL CSearchFile::GetFilePath(const int nNum, CString &strFullPath)
 {
-	BOOL bRet = 0;
+	BOOL bRet = FALSE;
 	int nSize = GetSize();
 
 	if (nNum < 0 || nNum >= nSize) {
-		strFileName.Empty();
-		bRet = 1;
+		strFullPath.Empty();
+		bRet = TRUE;
 	} else {
 		CBase *p = (CBase *)m_arrFileName.GetAt(nNum);
 
-		strFileName = p->m_strFullPath;
+		strFullPath = p->m_strFullPath;
 	}
 
 	return bRet;
 }
 
+
+/// <summary>
+/// ファイルのタイトルを返す
+/// </summary>
+/// <param name="nNum">インデックス番号</param>
+/// <param name="str">タイトル</param>
+/// <returns>FALSE:成功/TRUE:失敗</returns>
 BOOL CSearchFile::GetFileTitle(const int nNum, CString &str)
 {
-	BOOL bRet = 0;
+	BOOL bRet = FALSE;
 	int nSize = GetSize();
 
 	if (nNum < 0 || nNum >= nSize) {
 		str.Empty();
-		bRet = 1;
+		bRet = TRUE;
 	} else {
 		CBase *p = (CBase *)m_arrFileName.GetAt(nNum);
-		
-		if (p->m_strNewTitle.IsEmpty()) {
-			str = p->m_strFileTitle;
-		} else {
-			str = p->m_strNewTitle;
-		}
+
+		str = p->m_strFileTitle;
 	}
 
 	return bRet;
 }
 
+
+/// <summary>
+/// ファイルの拡張子を返す
+/// </summary>
+/// <param name="nNum">インデックス番号</param>
+/// <param name="strExt">拡張子</param>
+/// <returns>FALSE:成功/TRUE:失敗</returns>
 BOOL CSearchFile::GetFileExt(const int nNum, CString &strExt)
 {
 	int n;
@@ -201,33 +245,11 @@ BOOL CSearchFile::GetFileExt(const int nNum, CString &strExt)
 }
 
 
-BOOL CSearchFile::GetChengTitel(const int nNum)
-{
-	int nSize = GetSize();
-
-	if (nNum < 0 || nNum >= nSize) { return FALSE; }
-
-	CBase *p = (CBase *)m_arrFileName.GetAt(nNum);
-
-	return p->m_bChg;
-}
-
-
-void CSearchFile::SetNewTitle(const int nNum, const char *pszTitle)
-{
-	int nSize = GetSize();
-
-	if (nNum < 0 || nNum >= nSize) { return; }
-
-	if (strlen(pszTitle) == 0) { return; }
-
-	CBase *p = (CBase *)m_arrFileName.GetAt(nNum);
-
-	p->m_bChg        = TRUE;
-	p->m_strNewTitle = pszTitle;
-}
-
-
+/// <summary>
+/// 削除フラグの状態を変更する
+/// </summary>
+/// <param name="nNum">インデックス番号</param>
+/// <returns>FALSE:削除しない or 番号が不正/TRUE:削除する</returns>
 BOOL CSearchFile::ChgFileDeleteFlag(const int nNum)
 {
 	int nSize = GetSize();
@@ -243,6 +265,11 @@ BOOL CSearchFile::ChgFileDeleteFlag(const int nNum)
 }
 
 
+/// <summary>
+/// 削除フラグの状態を返す
+/// </summary>
+/// <param name="nNum">インデックス番号</param>
+/// <returns>FALSE:削除しない or 番号が不正/TRUE:削除する</returns>
 BOOL CSearchFile::IsDelete(const int nNum)
 {
 	int nSize = GetSize();
@@ -259,9 +286,11 @@ BOOL CSearchFile::IsDelete(const int nNum)
 //===========================================================================
 // 検索拡張子の関係
 //===========================================================================
-//---------------------------------------------------------------------------
-// 拡張子のセット
-//---------------------------------------------------------------------------
+
+/// <summary>
+/// 拡張子のセット 
+/// </summary>
+/// <param name="pszFileExt">拡張子</param>
 void CSearchFile::SetScanExt(const char *pszFileExt)
 {
 	if (*pszFileExt != '\0') {
@@ -276,27 +305,45 @@ void CSearchFile::SetScanExt(const char *pszFileExt)
 }
 
 
+/// <summary>
+/// 登録した拡張子の数を返す
+/// </summary>
+/// <returns>登録数</returns>
 int CSearchFile::GetExtSize()
 {
 	return (int)m_arrFileExt.GetSize();
 }
 
-int CSearchFile::GetScanExt(const int nNum, char *pExt, const int nBufSize)
+
+/// <summary>
+/// 拡張子を返す
+/// </summary>
+/// <param name="nNum">インデックス番号</param>
+/// <param name="pExt">保存するバッファポインタ</param>
+/// <param name="nBufSize">確保しているバッファサイズ</param>
+/// <returns>FALSE:成功/TRUE:失敗</returns>
+BOOL CSearchFile::GetScanExt(const int nNum, char *pExt, const int nBufSize)
 {
 	int nSize = GetExtSize();
 
-	if (nNum < 0 || nNum >= nSize) { return (1); }
+	if (nNum < 0 || nNum >= nSize) { return TRUE; }
 
 	strcpy_s(pExt, nBufSize, (char *)m_arrFileExt.GetAt(nNum));
 
-	return 0;
+	return FALSE;
 }
 
 
-int CSearchFile::CheckFileExt(const char *pszFileName)
+
+/// <summary>
+/// 指定されたファイル名が、スキャン対象の拡張子のいずれかで終わっているかを判定します。
+/// </summary>
+/// <param name="pszFileName">判定するファイル名の文字列。</param>
+/// <returns>FALSE:見つけられない/TRUE:見つけた</returns>
+BOOL CSearchFile::CheckFileExt(const char *pszFileName)
 {
 	int i;
-	int nRet = 0;
+	BOOL bRet = FALSE;
 	int nLoop = GetExtSize();
 	char szExt[MAX_PATH + 5];
 	const char *cp;
@@ -305,12 +352,12 @@ int CSearchFile::CheckFileExt(const char *pszFileName)
 		GetScanExt(i, szExt, MAX_PATH);
 		if (NULL != (cp = strstr(pszFileName, szExt))) {
 			if (*(cp + strlen(szExt)) == '\0') {
-				nRet = 1;
+				bRet = TRUE;
 				break;
 			}
 		}
 	}
-	return nRet;
+	return bRet;
 }
 
 

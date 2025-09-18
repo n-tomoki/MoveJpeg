@@ -96,6 +96,8 @@ BEGIN_MESSAGE_MAP(CDlgMain, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_FOLDER2, &CDlgMain::OnBnClickedButtonFolder2)
 	ON_BN_CLICKED(IDC_BUTTON_FOLDER3, &CDlgMain::OnBnClickedButtonFolder3)
 	ON_BN_CLICKED(IDC_BUTTON_FOLDER4, &CDlgMain::OnBnClickedButtonFolder4)
+	ON_BN_CLICKED(IDC_BUTTON_BACK, &CDlgMain::OnBnClickedButtonBack)
+	ON_BN_CLICKED(IDC_BUTTON_NEXT, &CDlgMain::OnBnClickedButtonNext)
 END_MESSAGE_MAP()
 
 
@@ -223,7 +225,6 @@ void CDlgMain::Init()
 
 	m_pScan = new CSearchFile;
 
-
 	InitFolderButton();
 }
 
@@ -277,7 +278,7 @@ void CDlgMain::InitFolderButton()
 
 	int i;
 	int nCode = IDC_BUTTON_FOLDER1;
-	int nSize = min((int)m_arrButton.GetSize(), 4);
+	int nSize = min((int)m_arrButton.GetSize(), SELECT_BUTTON_MAXNUM);
 
 	for (i = 0; i < nSize; i++) {
 		SButtonBase *pBase = (SButtonBase *)m_arrButton.GetAt(i);
@@ -286,11 +287,17 @@ void CDlgMain::InitFolderButton()
 		nCode++;
 	}
 
-	for (; i < 4; i++) {
+	for (; i < SELECT_BUTTON_MAXNUM; i++) {
+		SButtonBase *p = new SButtonBase();
+		p->m_bEnable   = FALSE;
+		p->m_bUse      = FALSE;
+
+		m_arrButton.Add((void *)p);
+
 		GetDlgItem(nCode)->SetWindowTextA("-----");
-		GetDlgItem(nCode)->EnableWindow(FALSE);
 		nCode++;
 	}
+	EnableButton(FALSE);
 }
 
 
@@ -361,7 +368,9 @@ void CDlgMain::OnBnClickedButtonSelectPath()
 }
 
 
-
+/// <summary>
+/// フォルダ内の検索をする
+/// </summary>
 void CDlgMain::OnBnClickedButtonScanFile()
 {
 	CString str;
@@ -398,13 +407,61 @@ void CDlgMain::UpdateDispNumber()
 		strDispMsg.Format("(%04d/%04d)", m_nDispNumber, m_nDispMaxNum);
 
 		if (!m_pScan->GetFilePath(m_nDispNumber, strFilePath)) {
-			m_pGv->FileOpen(strFilePath);
+			GvFileOpen(strFilePath);
 		}
 	} else {
 		strDispMsg.Format("(xxxx/xxxx)");
 	}
 
 	GetDlgItem(IDC_STATIC_DISP_NUMBER)->SetWindowTextA(strDispMsg);
+	EnableButton();
+}
+
+
+/// <summary>
+/// 「GV.EXE」に指定ファイルを表示させる
+/// </summary>
+/// <param name="pszFileName"></param>
+/// <returns>FALSE:成功/TRUE:失敗</returns>
+BOOL CDlgMain::GvFileOpen(const char *pszFileName)
+{
+	BOOL bRet = FALSE;
+
+	if (m_pGv->FileOpen(pszFileName)) {
+		if (!m_pGv->ReStart()) {
+			InitGv();
+			if (m_pGv->FileOpen(pszFileName)) {
+				bRet = TRUE;
+			}
+		}
+	}
+
+	return bRet;
+}
+
+
+/// <summary>
+/// 各ボタンの状態を設定する
+/// </summary>
+void CDlgMain::EnableButton(BOOL bEnable)
+{
+	if (!bEnable) {
+		GetDlgItem(IDC_BUTTON_BACK)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_NEXT)->EnableWindow(FALSE);
+		
+		for (int i = 0; i < SELECT_BUTTON_MAXNUM; i++) {
+			GetDlgItem(IDC_BUTTON_FOLDER1 + i)->EnableWindow(FALSE);
+		}
+	} else {
+		if (m_nDispNumber == 0) { GetDlgItem(IDC_BUTTON_BACK)->EnableWindow(FALSE); }
+		else                    { GetDlgItem(IDC_BUTTON_BACK)->EnableWindow(TRUE);  }
+
+		if (m_nDispNumber < m_nDispMaxNum - 1) {
+			GetDlgItem(IDC_BUTTON_NEXT)->EnableWindow(TRUE);
+		} else {
+			GetDlgItem(IDC_BUTTON_NEXT)->EnableWindow(FALSE);
+		}
+	}
 }
 
 
@@ -431,6 +488,34 @@ void CDlgMain::OnDropFiles(HDROP hDropInfo)
 
 	// ドロップされたファイルの情報を解放する
 	DragFinish(hDropInfo);
+}
+
+
+//===========================================================================
+// 画像の表示関係
+//===========================================================================
+
+/// <summary>
+/// 次の画像を表示
+/// </summary>
+void CDlgMain::OnBnClickedButtonNext()
+{
+	if (m_nDispNumber < m_nDispMaxNum - 1) {
+		m_nDispNumber++;
+	}
+	UpdateDispNumber();
+}
+
+
+/// <summary>
+/// 前の画像を表示
+/// </summary>
+void CDlgMain::OnBnClickedButtonBack()
+{
+	if (m_nDispNumber) {
+		m_nDispNumber--;
+	}
+	UpdateDispNumber();
 }
 
 
