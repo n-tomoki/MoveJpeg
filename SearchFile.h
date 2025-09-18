@@ -7,7 +7,7 @@ class CSearchFile {
 	/////////////////////////////////////////////////////////////////////////////
 	class CBase {
 	public:
-		BOOL m_bDelete;
+		int     m_nSelecct;
 		CString m_strFullPath;
 		CString m_strFileTitle;
 		unsigned long long m_dw64DateTime;
@@ -41,19 +41,15 @@ public:
 	BOOL GetFilePath(const int nNum, CString &strFullPath);
 	BOOL GetFileTitle(const int nNum, CString &strFileName);
 	BOOL GetFileExt(const int nNum, CString &strExt);
-	BOOL GetChengTitel(const int nNum);
+	int  GetSelectNum(const int nNum);
 
-	void SetNewTitle(const int nNum, const char *pszTilte);
 	void SetScanExt(const char *pszFileExt);
+	int  SetSelectNum(const int nNum, const int nSelect);
 
 
 	void InitRandom();
 	void InitSortName();
 	void InitSortLastWrite(const BOOL bRevase = FALSE);
-
-	// ファイル削除？？
-	BOOL ChgFileDeleteFlag(const int nNum);
-	BOOL IsDelete(const int nNum);
 };
 
 #endif

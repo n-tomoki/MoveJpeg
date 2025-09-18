@@ -12,10 +12,11 @@
 #define IDC_BUTTON_SELECT_PATH          1002
 #define IDC_BUTTON_SCAN_FILE            1003
 #define IDC_STATIC_DISP_NUMBER          1004
-#define IDC_BUTTON_FOLDER1              1005
-#define IDC_BUTTON_FOLDER2              1006
-#define IDC_BUTTON_FOLDER3              1007
-#define IDC_BUTTON_FOLDER4              1008
+#define IDC_RADIO_FOLDER0               1010
+#define IDC_RADIO_FOLDER1               1011
+#define IDC_RADIO_FOLDER2               1012
+#define IDC_RADIO_FOLDER3               1013
+#define IDC_RADIO_FOLDER4               1014
 #define IDC_BUTTON_BACK                 1021
 #define IDC_BUTTON_NEXT                 1022
 

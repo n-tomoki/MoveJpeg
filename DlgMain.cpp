@@ -92,12 +92,13 @@ BEGIN_MESSAGE_MAP(CDlgMain, CDialogEx)
 	ON_WM_DROPFILES()
 	ON_BN_CLICKED(IDC_BUTTON_SELECT_PATH,&CDlgMain::OnBnClickedButtonSelectPath)
 	ON_BN_CLICKED(IDC_BUTTON_SCAN_FILE,&CDlgMain::OnBnClickedButtonScanFile)
-	ON_BN_CLICKED(IDC_BUTTON_FOLDER1, &CDlgMain::OnBnClickedButtonFolder1)
-	ON_BN_CLICKED(IDC_BUTTON_FOLDER2, &CDlgMain::OnBnClickedButtonFolder2)
-	ON_BN_CLICKED(IDC_BUTTON_FOLDER3, &CDlgMain::OnBnClickedButtonFolder3)
-	ON_BN_CLICKED(IDC_BUTTON_FOLDER4, &CDlgMain::OnBnClickedButtonFolder4)
 	ON_BN_CLICKED(IDC_BUTTON_BACK, &CDlgMain::OnBnClickedButtonBack)
 	ON_BN_CLICKED(IDC_BUTTON_NEXT, &CDlgMain::OnBnClickedButtonNext)
+	ON_BN_CLICKED(IDC_RADIO_FOLDER0, &CDlgMain::OnBnClickedRadioFolder0)
+	ON_BN_CLICKED(IDC_RADIO_FOLDER1, &CDlgMain::OnBnClickedRadioFolder1)
+	ON_BN_CLICKED(IDC_RADIO_FOLDER2, &CDlgMain::OnBnClickedRadioFolder2)
+	ON_BN_CLICKED(IDC_RADIO_FOLDER3, &CDlgMain::OnBnClickedRadioFolder3)
+	ON_BN_CLICKED(IDC_RADIO_FOLDER4, &CDlgMain::OnBnClickedRadioFolder4)
 END_MESSAGE_MAP()
 
 
@@ -277,8 +278,8 @@ void CDlgMain::InitFolderButton()
 
 
 	int i;
-	int nCode = IDC_BUTTON_FOLDER1;
-	int nSize = min((int)m_arrButton.GetSize(), SELECT_BUTTON_MAXNUM);
+	int nCode = IDC_RADIO_FOLDER0;
+	int nSize = min((int)m_arrButton.GetSize(), SELECT_RADIO_MAXNUM);
 
 	for (i = 0; i < nSize; i++) {
 		SButtonBase *pBase = (SButtonBase *)m_arrButton.GetAt(i);
@@ -287,9 +288,8 @@ void CDlgMain::InitFolderButton()
 		nCode++;
 	}
 
-	for (; i < SELECT_BUTTON_MAXNUM; i++) {
+	for (; i < SELECT_RADIO_MAXNUM; i++) {
 		SButtonBase *p = new SButtonBase();
-		p->m_bEnable   = FALSE;
 		p->m_bUse      = FALSE;
 
 		m_arrButton.Add((void *)p);
@@ -449,8 +449,8 @@ void CDlgMain::EnableButton(BOOL bEnable)
 		GetDlgItem(IDC_BUTTON_BACK)->EnableWindow(FALSE);
 		GetDlgItem(IDC_BUTTON_NEXT)->EnableWindow(FALSE);
 		
-		for (int i = 0; i < SELECT_BUTTON_MAXNUM; i++) {
-			GetDlgItem(IDC_BUTTON_FOLDER1 + i)->EnableWindow(FALSE);
+		for (int i = 0; i < SELECT_RADIO_MAXNUM; i++) {
+			GetDlgItem(IDC_RADIO_FOLDER0 + i)->EnableWindow(FALSE);
 		}
 	} else {
 		if (m_nDispNumber == 0) { GetDlgItem(IDC_BUTTON_BACK)->EnableWindow(FALSE); }
@@ -460,6 +460,21 @@ void CDlgMain::EnableButton(BOOL bEnable)
 			GetDlgItem(IDC_BUTTON_NEXT)->EnableWindow(TRUE);
 		} else {
 			GetDlgItem(IDC_BUTTON_NEXT)->EnableWindow(FALSE);
+		}
+
+		int nRadio = m_pScan->GetSelectNum(m_nDispNumber);
+		for (int i = 0; i < SELECT_RADIO_MAXNUM; i++) {
+			BOOL bEnable = TRUE;
+			SButtonBase *p = (SButtonBase *)m_arrButton.GetAt(i);
+
+			if (nRadio == i) {
+				CheckDlgButton(IDC_RADIO_FOLDER0 + nRadio, BST_CHECKED);
+			} else {
+				CheckDlgButton(IDC_RADIO_FOLDER0 + nRadio, BST_UNCHECKED);
+			}
+
+			if (!p->m_bUse) { bEnable = FALSE; }
+			GetDlgItem(IDC_RADIO_FOLDER0 + i)->EnableWindow(bEnable);
 		}
 	}
 }
@@ -520,43 +535,53 @@ void CDlgMain::OnBnClickedButtonBack()
 
 
 //===========================================================================
-// フォルダボタンの処理
+// ラジオボタンの処理
 //===========================================================================
 
-/// <summary>
-/// 「フォルダ１」が押された
-/// </summary>
-void CDlgMain::OnBnClickedButtonFolder1()
+/// <summary>「フォルダ0」が押された</summary>
+void CDlgMain::OnBnClickedRadioFolder0()
 {
-	// TODO: ここにコントロール通知ハンドラー コードを追加します。
+	SetRadioSelect(0);
+}
+
+/// <summary>フォルダ１」が押された</summary>
+void CDlgMain::OnBnClickedRadioFolder1()
+{
+	SetRadioSelect(1);
+}
+
+
+/// <summary>「フォルダ２」が押された</summary>
+void CDlgMain::OnBnClickedRadioFolder2()
+{
+	SetRadioSelect(2);
+}
+
+
+/// <summary>「フォルダ３」が押された</summary>
+void CDlgMain::OnBnClickedRadioFolder3()
+{
+	SetRadioSelect(3);
+}
+
+
+/// <summary>「フォルダ４」が押された</summary>
+void CDlgMain::OnBnClickedRadioFolder4()
+{
+	SetRadioSelect(4);
 }
 
 
 /// <summary>
-/// 「フォルダ２」が押された
+/// ラジオボタンで選択されたフォルダ番号をセットする
 /// </summary>
-void CDlgMain::OnBnClickedButtonFolder2()
+/// <param name="nNum"></param>
+void CDlgMain::SetRadioSelect(const int nNum)
 {
-	// TODO: ここにコントロール通知ハンドラー コードを追加します。
+	m_pScan->SetSelectNum(m_nDispNumber, nNum);
 }
 
 
-/// <summary>
-/// 「フォルダ３」が押された
-/// </summary>
-void CDlgMain::OnBnClickedButtonFolder3()
-{
-	// TODO: ここにコントロール通知ハンドラー コードを追加します。
-}
-
-
-/// <summary>
-/// 「フォルダ４」が押された
-/// </summary>
-void CDlgMain::OnBnClickedButtonFolder4()
-{
-	// TODO: ここにコントロール通知ハンドラー コードを追加します。
-}
 
 
 //===========================================================================

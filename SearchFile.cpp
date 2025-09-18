@@ -10,8 +10,7 @@
 /////////////////////////////////////////////////////////////////////////////
 CSearchFile::CBase::CBase()
 {
-	m_bDelete = FALSE;
-	
+	m_nSelecct     = -1;
 	m_dw64DateTime = 0;
 }
 
@@ -246,41 +245,40 @@ BOOL CSearchFile::GetFileExt(const int nNum, CString &strExt)
 
 
 /// <summary>
-/// 削除フラグの状態を変更する
+/// 選択番号を設定する
 /// </summary>
 /// <param name="nNum">インデックス番号</param>
-/// <returns>FALSE:削除しない or 番号が不正/TRUE:削除する</returns>
-BOOL CSearchFile::ChgFileDeleteFlag(const int nNum)
+/// <param name="nSelect">番号</param>
+/// <returns>選択番号、エラーは(-1)</returns>
+int CSearchFile::SetSelectNum(const int nNum, const int nSelect)
 {
 	int nSize = GetSize();
 
-	if (nNum < 0 || nNum >= nSize) { return FALSE; }
+	if (nNum < 0 || nNum >= nSize) { return -1; }
 
 	CBase *p = (CBase *)m_arrFileName.GetAt(nNum);
 
-	if (p->m_bDelete) { p->m_bDelete = FALSE; }
-	else              { p->m_bDelete = TRUE;  }
+	p->m_nSelecct = nSelect;
 
-	return p->m_bDelete;
+	return nSelect;
 }
 
 
 /// <summary>
-/// 削除フラグの状態を返す
+/// 選択番号を返す
 /// </summary>
 /// <param name="nNum">インデックス番号</param>
-/// <returns>FALSE:削除しない or 番号が不正/TRUE:削除する</returns>
-BOOL CSearchFile::IsDelete(const int nNum)
+/// <returns>選択番号、エラーは(-1)</returns>
+BOOL CSearchFile::GetSelectNum(const int nNum)
 {
 	int nSize = GetSize();
 
-	if (nNum < 0 || nNum >= nSize) { return FALSE; }
+	if (nNum < 0 || nNum >= nSize) { return -1; }
 
 	CBase *p = (CBase *)m_arrFileName.GetAt(nNum);
 
-	return p->m_bDelete;
+	return p->m_nSelecct;
 }
-
 
 
 //===========================================================================

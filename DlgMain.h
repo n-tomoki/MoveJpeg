@@ -9,7 +9,7 @@
 #include "SearchFile.h"
 
 
-#define SELECT_BUTTON_MAXNUM 4
+#define SELECT_RADIO_MAXNUM 5
 
 
 // CDlgMain ダイアログ
@@ -48,13 +48,11 @@ protected:
 	// フォルダボタン関係
 	struct SButtonBase {
 		BOOL  m_bUse;
-		BOOL  m_bEnable;
 		char *m_pName;
 		char *m_pPath;
 
 		SButtonBase() {
 			m_bUse    = TRUE;
-			m_bEnable = TRUE;
 
 			m_pName = NULL;
 			m_pPath = NULL;
@@ -69,8 +67,10 @@ protected:
 
 	void InitFolderButton();
 	void ReleaseFolderButton();
+	void SetRadioSelect(const int nNum);
 
 	void EnableButton(BOOL bEnable = TRUE);
+
 
 
 	// GV.EXE関係
@@ -112,10 +112,11 @@ public:
 	afx_msg void OnDropFiles(HDROP hDropInfo);
 	afx_msg void OnBnClickedButtonSelectPath();
 	afx_msg void OnBnClickedButtonScanFile();
-	afx_msg void OnBnClickedButtonFolder1();
-	afx_msg void OnBnClickedButtonFolder2();
-	afx_msg void OnBnClickedButtonFolder3();
-	afx_msg void OnBnClickedButtonFolder4();
 	afx_msg void OnBnClickedButtonBack();
 	afx_msg void OnBnClickedButtonNext();
+	afx_msg void OnBnClickedRadioFolder0();
+	afx_msg void OnBnClickedRadioFolder1();
+	afx_msg void OnBnClickedRadioFolder2();
+	afx_msg void OnBnClickedRadioFolder3();
+	afx_msg void OnBnClickedRadioFolder4();
 };
