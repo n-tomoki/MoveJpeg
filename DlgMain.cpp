@@ -133,6 +133,10 @@ BOOL CDlgMain::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 大きいアイコンの設定
 	SetIcon(m_hIcon, FALSE);		// 小さいアイコンの設定
 
+#if !_DEBUG
+	SetWindowPos(&CWnd::wndTopMost, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+#endif
+
 	DragAcceptFiles();
 
 	Init();
@@ -468,9 +472,9 @@ void CDlgMain::EnableButton(BOOL bEnable)
 			SButtonBase *p = (SButtonBase *)m_arrButton.GetAt(i);
 
 			if (nRadio == i) {
-				CheckDlgButton(IDC_RADIO_FOLDER0 + nRadio, BST_CHECKED);
+				CheckDlgButton(IDC_RADIO_FOLDER0 + i, BST_CHECKED);
 			} else {
-				CheckDlgButton(IDC_RADIO_FOLDER0 + nRadio, BST_UNCHECKED);
+				CheckDlgButton(IDC_RADIO_FOLDER0 + i, BST_UNCHECKED);
 			}
 
 			if (!p->m_bUse) { bEnable = FALSE; }
@@ -625,7 +629,7 @@ void CDlgMain::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
 		lpMMI->ptMinTrackSize.x = m_sizeDlgMin.cx;
 		lpMMI->ptMinTrackSize.y = m_sizeDlgMin.cy;
 		// lpMMI->ptMaxTrackSize.x = m_sizeDlgMin.cx;
-		// lpMMI->ptMaxTrackSize.y = m_sizeDlgMin.cy;
+		lpMMI->ptMaxTrackSize.y = m_sizeDlgMin.cy;
 	}
 }
 
@@ -674,7 +678,12 @@ void CDlgMain::OnSize(UINT nType, int cx, int cy)
 			MoveDlgItem(IDC_BUTTON_SELECT_PATH, dx,  0, dx,  0); 
 			MoveDlgItem(IDC_BUTTON_SCAN_FILE  , dx,  0, dx,  0); 
 			MoveDlgItem(IDC_BUTTON_QUIT       , dx,  0, dx, dy);
-//			MoveDlgItem(IDC_BUTTON_GO         ,  0,  0, dx, dy);
+			MoveDlgItem(IDC_STATIC_WAKU       , 0,   0, dx, dy);
+			MoveDlgItem(IDC_RADIO_FOLDER0     , 0,   0, dx, dy);
+			MoveDlgItem(IDC_RADIO_FOLDER1     , 0,   0, dx, dy);
+			MoveDlgItem(IDC_RADIO_FOLDER2     , 0,   0, dx, dy);
+			MoveDlgItem(IDC_RADIO_FOLDER3     , 0,   0, dx, dy);
+			MoveDlgItem(IDC_RADIO_FOLDER4     , 0,   0, dx, dy);
 
 			SaveWindowPos();
 
@@ -733,4 +742,5 @@ void CDlgMain::InitWindowPos()
 
 	MoveWindow(x, y, cx, cy);
 }
+
 
