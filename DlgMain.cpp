@@ -284,57 +284,51 @@ void CDlgMain::InitFolderButton()
 	CString strName;
 	CString strPath;
 
-	do {
-		sprintf_s(szKeyName, "FolderName%02d", nCnt);
-		sprintf_s(szKeyPath, "FolderPath%02d", nCnt);
-		
+	for (int i = 0; i < SELECT_RADIO_MAXNUM; i++) {
+		BOOL bUse = TRUE;
+
+		sprintf_s(szKeyName, "FolderName%02d", i);
+		sprintf_s(szKeyPath, "FolderPath%02d", i);
+
 		strName = App.GetParamFileString("FOLDER", szKeyName);
 		strPath = App.GetParamFileString("FOLDER", szKeyPath);
+
+		if      (strName.IsEmpty()) { bUse = FALSE; strName = "---"; }
+		else if (strName == "----") { bUse = FALSE; }
+
+		if (bUse) {
+			if      (strPath.IsEmpty())             { bUse = FALSE; }
+			else if (!File::IsExistFolder(strPath)) { bUse = FALSE; nErrCode |= nErrBit; }
+		}
 
 		App.WriteParamFileString("FOLDER", szKeyName, strName);
 		App.WriteParamFileString("FOLDER", szKeyPath, strPath);
 
-		if (strName.IsEmpty() || strPath.IsEmpty()) { break; }
-
 		int nLenName = strName.GetLength() + 1;
 		int nLenPath = strPath.GetLength() + 1;
+
 
 		SButtonBase *p = new SButtonBase();
 		p->m_pName     = new char[nLenName + 1];
 		p->m_pPath     = new char[nLenPath + 1];
+		p->m_bUse      = bUse;
 
 		strcpy_s(p->m_pName, nLenName, (const char *)strName);
 		strcpy_s(p->m_pPath, nLenPath, (const char *)strPath);
 
-		if (!File::IsExistFolder(strPath)) { nErrCode |= nErrBit; }
-
 		m_arrButton.Add((void *)p);
-		nCnt++;
 		nErrBit <<= 1;
-	} while (1); 
-
+	}
 
 	int i;
 	int nCode = IDC_RADIO_FOLDER0;
-	int nSize = min((int)m_arrButton.GetSize(), SELECT_RADIO_MAXNUM);
 	
 	m_pFont = MakeFont(14);
 
-	for (i = 0; i < nSize; i++) {
+	for (i = 0; i < SELECT_RADIO_MAXNUM; i++) {
 		SButtonBase *pBase = (SButtonBase *)m_arrButton.GetAt(i);
 
 		GetDlgItem(nCode)->SetWindowTextA(pBase->m_pName);
-		GetDlgItem(nCode)->SetFont(m_pFont);
-		nCode++;
-	}
-
-	for (; i < SELECT_RADIO_MAXNUM; i++) {
-		SButtonBase *p = new SButtonBase();
-		p->m_bUse      = FALSE;
-
-		m_arrButton.Add((void *)p);
-
-		GetDlgItem(nCode)->SetWindowTextA("-----");
 		GetDlgItem(nCode)->SetFont(m_pFont);
 		nCode++;
 	}
@@ -409,7 +403,7 @@ void CDlgMain::End(const int nEndCode)
 
 	GetDlgItem(IDC_EDIT_SCANPATH)->GetWindowTextA(str);
 
-	App.WriteParamFileString("PARAM","SCAN_PATH", str);
+	App.WriteParamFileString("PARAM", "SCAN_PATH" , str);
 
 	m_pGv->End();
 
@@ -536,13 +530,12 @@ void CDlgMain::EnableButton(BOOL bEnable)
 	if (!bEnable) {
 		GetDlgItem(IDC_BUTTON_BACK)->EnableWindow(FALSE);
 		GetDlgItem(IDC_BUTTON_NEXT)->EnableWindow(FALSE);
-		
-		for (int i = 0; i < SELECT_RADIO_MAXNUM; i++) {
-			GetDlgItem(IDC_RADIO_FOLDER0 + i)->EnableWindow(FALSE);
-		}
 	} else {
-		if (m_nDispNumber == 0) { GetDlgItem(IDC_BUTTON_BACK)->EnableWindow(FALSE); }
-		else                    { GetDlgItem(IDC_BUTTON_BACK)->EnableWindow(TRUE);  }
+		if (m_nDispNumber == 0) {
+			GetDlgItem(IDC_BUTTON_BACK)->EnableWindow(FALSE);
+		} else {
+			GetDlgItem(IDC_BUTTON_BACK)->EnableWindow(TRUE);
+		}
 
 		if (m_nDispNumber < m_nDispMaxNum - 1) {
 			GetDlgItem(IDC_BUTTON_NEXT)->EnableWindow(TRUE);
@@ -560,9 +553,6 @@ void CDlgMain::EnableButton(BOOL bEnable)
 			} else {
 				CheckDlgButton(IDC_RADIO_FOLDER0 + i, BST_UNCHECKED);
 			}
-
-			if (!p->m_bUse) { bEnable = FALSE; }
-			GetDlgItem(IDC_RADIO_FOLDER0 + i)->EnableWindow(bEnable);
 		}
 	}
 }
@@ -747,6 +737,12 @@ BOOL CDlgMain::CreateDestFileName(const char *pszSrcName, const char *pszDstPath
 
 
 //===========================================================================
+// いろいろ
+//===========================================================================
+
+
+
+//===========================================================================
 // 強制終了処理
 //===========================================================================
 
@@ -900,5 +896,4 @@ void CDlgMain::InitWindowPos()
 
 	MoveWindow(x, y, cx, cy);
 }
-
 
