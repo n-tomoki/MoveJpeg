@@ -10,6 +10,7 @@ class CSearchFile {
 		int     m_nSelecct;
 		CString m_strFullPath;
 		CString m_strFileTitle;
+		CString m_strFileName;
 		unsigned long long m_dw64DateTime;
 
 		CBase();
@@ -37,11 +38,14 @@ public:
 	void Init();
 	int  Main(const char *pszPath);
 
-	int  GetSize();
-	BOOL GetFilePath(const int nNum, CString &strFullPath);
-	BOOL GetFileTitle(const int nNum, CString &strFileName);
-	BOOL GetFileExt(const int nNum, CString &strExt);
-	int  GetSelectNum(const int nNum);
+	int     GetSize();
+	BOOL    GetFilePath(const int nNum, CString &strFullPath);
+	BOOL    GetFileTitle(const int nNum, CString &strFileTitle);
+	BOOL    GetFileName(const int nNum, CString &strFileName);
+	CString GetFileName(const int nNum);
+	BOOL    GetFileExt(const int nNum, CString &strExt);
+	int     GetSelectNum(const int nNum);
+	int     GetSelectCount();
 
 	void SetScanExt(const char *pszFileExt);
 	int  SetSelectNum(const int nNum, const int nSelect);

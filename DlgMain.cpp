@@ -49,6 +49,32 @@ END_MESSAGE_MAP()
 // CDlgMain ダイアログ
 
 
+/// <summary>
+/// CopyFileExのコールバック関数
+/// </summary>
+/// <param name="TotalFileSize">バイト単位の総ファイルサイズ</param>
+/// <param name="TotalBytesTransferred">転送された総バイト数</param>
+/// <param name="StreamSize">このストリームの総バイト数</param>
+/// <param name="StreamBytesTransferred">このストリームに対して転送された総バイト数</param>
+/// <param name="dwStreamNumber">現在のストリーム</param>
+/// <param name="dwCallbackReason">CopyProgressRoutine 関数が呼び出された理由</param>
+/// <param name="hSourceFile">コピー元ファイルのハンドル</param>
+/// <param name="hDestinationFile">コピー先ファイルのハンドル</param>
+/// <param name="lpData">CopyFileEx 関数から渡される</param>
+/// <returns>リターン コード</returns>
+DWORD CALLBACK CopyProgressRoutine(
+	__int64 TotalFileSize,          // バイト単位の総ファイルサイズ
+	__int64 TotalBytesTransferred,  // 転送された総バイト数
+	__int64 StreamSize,             // このストリームの総バイト数
+	__int64 StreamBytesTransferred, // このストリームに対して転送された総バイト数
+	DWORD   dwStreamNumber,         // 現在のストリーム
+	DWORD   dwCallbackReason,       // CopyProgressRoutine 関数が呼び出された理由
+	HANDLE  hSourceFile,            // コピー元ファイルのハンドル
+	HANDLE  hDestinationFile,       // コピー先ファイルのハンドル
+	LPVOID  lpData);                // CopyFileEx 関数から渡される
+
+
+
 
 CDlgMain::CDlgMain(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MOVEJPEG_DIALOG, pParent)
@@ -251,6 +277,8 @@ void CDlgMain::InitFolderButton()
 {
 	BOOL bRun = TRUE;
 	int  nCnt = 0;
+	int  nErrCode =   0;
+	int  nErrBit  = 0x1;
 	char szKeyName[20];
 	char szKeyPath[20];
 	CString strName;
@@ -278,8 +306,11 @@ void CDlgMain::InitFolderButton()
 		strcpy_s(p->m_pName, nLenName, (const char *)strName);
 		strcpy_s(p->m_pPath, nLenPath, (const char *)strPath);
 
+		if (!File::IsExistFolder(strPath)) { nErrCode |= nErrBit; }
+
 		m_arrButton.Add((void *)p);
 		nCnt++;
+		nErrBit <<= 1;
 	} while (1); 
 
 
@@ -307,6 +338,11 @@ void CDlgMain::InitFolderButton()
 		GetDlgItem(nCode)->SetFont(m_pFont);
 		nCode++;
 	}
+
+	if (nErrCode) {
+		MessageBoxA("指定されたフォルダが存在しません", "確認", MB_ICONEXCLAMATION|MB_OK);
+	}
+
 	EnableButton(FALSE);
 }
 
@@ -354,6 +390,20 @@ void CDlgMain::End(const int nEndCode)
 {
 	if (m_bEnding) { return; }
 	m_bEnding = TRUE;
+
+	if (!nEndCode) {
+		if (m_pScan->GetSelectCount()) {
+			int n = MessageBoxA("画像ファイルを指定フォルダにコピーしますか？",
+				"確認",
+				MB_ICONQUESTION | MB_YESNOCANCEL);
+			if (n == IDYES) {
+				ExecCopy();
+			} else if (n == IDCANCEL) {
+				m_bEnding = FALSE;
+				return;
+			}
+		}
+	}
 
 	CString str;
 
@@ -620,6 +670,80 @@ void CDlgMain::SetRadioSelect(const int nNum)
 }
 
 
+//===========================================================================
+// 画像の転送をする
+//===========================================================================
+
+/// <summary>
+/// 画像の転送をする
+/// </summary>
+/// <returns>コピーしたファイル数</returns>
+int CDlgMain::ExecCopy()
+{
+	int nRet      = 0;
+	int nSizeScan = m_pScan->GetSize();
+	int nSizeBase = (int)m_arrButton.GetSize();
+	CString strSrcPath;
+	CString strDstPath;
+
+	for (int i = 0; i < nSizeScan; i++) {
+		int nNum = m_pScan->GetSelectNum(i);
+		
+		if (nNum >= 0 && nNum < nSizeBase) {
+			SButtonBase *pBase = (SButtonBase *)m_arrButton.GetAt(nNum);
+
+			if (pBase->m_bUse) {
+				m_pScan->GetFilePath(i, strSrcPath);
+				CreateDestFileName(m_pScan->GetFileName(i), pBase->m_pPath, strDstPath);
+				if (CopyFileExA(strSrcPath, strDstPath, (LPPROGRESS_ROUTINE)CopyProgressRoutine, (void *)this, NULL, 0)) {
+					// 成功
+					nRet++;
+				} else {
+					// 失敗
+				}
+
+			}
+		}
+	}
+	return nRet;
+}
+
+
+
+/// <summary>CopyFileExのコールバック関数</summary>
+DWORD CALLBACK CopyProgressRoutine(
+	__int64 TotalFileSize,          // バイト単位の総ファイルサイズ
+	__int64 TotalBytesTransferred,  // 転送された総バイト数
+	__int64 StreamSize,             // このストリームの総バイト数
+	__int64 StreamBytesTransferred, // このストリームに対して転送された総バイト数
+	DWORD   dwStreamNumber,         // 現在のストリーム
+	DWORD   dwCallbackReason,       // CopyProgressRoutine 関数が呼び出された理由
+	HANDLE  hSourceFile,            // コピー元ファイルのハンドル
+	HANDLE  hDestinationFile,       // コピー先ファイルのハンドル
+	LPVOID  lpData)                 // CopyFileEx 関数から渡される
+{
+	return PROGRESS_CONTINUE;
+}
+
+
+
+/// <summary>
+/// コピー先のファイルパスを作成する
+/// </summary>
+/// <param name="pszSrcName">コピー元のファイル名</param>
+/// <param name="pszDstPath">コピー先のフォルダ名</param>
+/// <param name="strDstPath">コピー先のファイルパス</param>
+/// <returns>FALSE</returns>
+BOOL CDlgMain::CreateDestFileName(const char *pszSrcName, const char *pszDstPath, CString  &strDstPath)
+{
+	strDstPath = pszDstPath;
+	if (!App.AnalyzePathFolder(strDstPath)) {
+		strDstPath += "\\";
+	}
+	strDstPath += pszSrcName;
+
+	return FALSE;
+}
 
 
 //===========================================================================
@@ -634,7 +758,7 @@ void CDlgMain::OnEndSession(BOOL bEnding)
 {
 	CDialogEx::OnEndSession(bEnding);
 
-	if (bEnding) { End(); }
+	if (bEnding) { End(1); }
 }
 
 

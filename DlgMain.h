@@ -74,6 +74,10 @@ protected:
 
 	void EnableButton(BOOL bEnable = TRUE);
 
+	// 画像の転送をする
+	int ExecCopy();
+	BOOL CreateDestFileName(const char *pszSrcName, const char *pszDstPath, CString  &strDstPath);
+
 
 
 	// GV.EXE関係

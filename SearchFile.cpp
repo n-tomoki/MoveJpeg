@@ -128,6 +128,7 @@ int CSearchFile::SearchMain(const char *pszSearchPath, const BOOL bSubFolder)
 
 				p->m_strFileTitle  = Find.GetFileTitle();
 				p->m_strFullPath   = Find.GetFilePath();
+				p->m_strFileName   = Find.GetFileName();
 				p->m_dw64DateTime  = ft.dwHighDateTime;
 				p->m_dw64DateTime <<= 32;
 				p->m_dw64DateTime += ft.dwLowDateTime;
@@ -221,6 +222,47 @@ BOOL CSearchFile::GetFileTitle(const int nNum, CString &str)
 
 
 /// <summary>
+/// ファイル名を返す
+/// </summary>
+/// <param name="nNum">インデックス番号</param>
+/// <param name="str">ファイル名</param>
+/// <returns>FALSE:成功/TRUE:失敗</returns>
+BOOL CSearchFile::GetFileName(const int nNum, CString &str)
+{
+	BOOL bRet = FALSE;
+	int nSize = GetSize();
+
+	if (nNum < 0 || nNum >= nSize) {
+		str.Empty();
+		bRet = TRUE;
+	} else {
+		CBase *p = (CBase *)m_arrFileName.GetAt(nNum);
+
+		str = p->m_strFileName;
+	}
+
+	return bRet;
+}
+
+// <summary>
+/// ファイル名を返す
+/// </summary>
+/// <param name="nNum">インデックス番号</param>
+/// <param name="str">ファイル名</param>
+/// <returns>FALSE:成功/TRUE:失敗</returns>
+CString CSearchFile::GetFileName(const int nNum)
+{
+	int nSize = GetSize();
+
+	if (nNum < 0 || nNum >= nSize) { return ""; }
+
+	CBase *p = (CBase *)m_arrFileName.GetAt(nNum);
+
+	return  p->m_strFileName;
+}
+
+
+/// <summary>
 /// ファイルの拡張子を返す
 /// </summary>
 /// <param name="nNum">インデックス番号</param>
@@ -279,6 +321,27 @@ BOOL CSearchFile::GetSelectNum(const int nNum)
 
 	return p->m_nSelecct;
 }
+
+
+/// <summary>
+/// 移動先をセットされた数を返す
+/// </summary>
+/// <returns>セットされた数</returns>
+int CSearchFile::GetSelectCount()
+{
+	int nRet  = 0;
+	int nSize = GetSize();
+
+	for (int i = 0; i < nSize; i++) {
+		CBase *p = (CBase *)m_arrFileName.GetAt(i);
+		if (p->m_nSelecct >= 0) {
+			nRet++;
+		}
+	}
+
+	return nRet;
+}
+
 
 
 //===========================================================================
