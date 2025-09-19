@@ -387,7 +387,7 @@ void CDlgMain::End(const int nEndCode)
 
 	if (!nEndCode) {
 		if (m_pScan->GetSelectCount()) {
-			int n = MessageBoxA("画像ファイルを指定フォルダにコピーしますか？",
+			int n = MessageBoxA("画像ファイルを指定フォルダに移動しますか？",
 				"確認",
 				MB_ICONQUESTION | MB_YESNOCANCEL);
 			if (n == IDYES) {
@@ -692,6 +692,9 @@ int CDlgMain::ExecCopy()
 				CreateDestFileName(m_pScan->GetFileName(i), pBase->m_pPath, strDstPath);
 				if (CopyFileExA(strSrcPath, strDstPath, (LPPROGRESS_ROUTINE)CopyProgressRoutine, (void *)this, NULL, 0)) {
 					// 成功
+#if !_DEBUG
+					File::UnlinkFile(strSrcPath);
+#endif
 					nRet++;
 				} else {
 					// 失敗
