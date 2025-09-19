@@ -391,7 +391,12 @@ void CDlgMain::End(const int nEndCode)
 				"確認",
 				MB_ICONQUESTION | MB_YESNOCANCEL);
 			if (n == IDYES) {
-				ExecCopy();
+				n = ExecCopy();
+
+				CString str;
+				str.Format("%d個のファイルを処理した", n);
+
+				MessageBoxA(str, "確認", MB_ICONINFORMATION|MB_OK);
 			} else if (n == IDCANCEL) {
 				m_bEnding = FALSE;
 				return;
