@@ -34,7 +34,6 @@ protected:
 	HICON m_hIcon;
 	BOOL  m_bEnding;
 
-
 	void Init();
 	void End(const int nEndCode = 0);
 
@@ -68,6 +67,10 @@ protected:
 	void InitFolderButton();
 	void ReleaseFolderButton();
 	void SetRadioSelect(const int nNum);
+
+	CFont *m_pFont;
+	CFont *MakeFont(const int nFontH = 14);
+
 
 	void EnableButton(BOOL bEnable = TRUE);
 

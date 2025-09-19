@@ -60,6 +60,7 @@ CDlgMain::CDlgMain(CWnd* pParent /*=nullptr*/)
 
 	m_pGv   = NULL;
 	m_pScan = NULL;
+	m_pFont = NULL;
 
 	m_nDispNumber = 0;
 	m_nDispMaxNum = 0;
@@ -70,6 +71,7 @@ CDlgMain::~CDlgMain()
 {
 	delete m_pGv;
 	delete m_pScan;
+	delete m_pFont;
 }
 
 
@@ -284,11 +286,14 @@ void CDlgMain::InitFolderButton()
 	int i;
 	int nCode = IDC_RADIO_FOLDER0;
 	int nSize = min((int)m_arrButton.GetSize(), SELECT_RADIO_MAXNUM);
+	
+	m_pFont = MakeFont(14);
 
 	for (i = 0; i < nSize; i++) {
 		SButtonBase *pBase = (SButtonBase *)m_arrButton.GetAt(i);
 
 		GetDlgItem(nCode)->SetWindowTextA(pBase->m_pName);
+		GetDlgItem(nCode)->SetFont(m_pFont);
 		nCode++;
 	}
 
@@ -299,9 +304,38 @@ void CDlgMain::InitFolderButton()
 		m_arrButton.Add((void *)p);
 
 		GetDlgItem(nCode)->SetWindowTextA("-----");
+		GetDlgItem(nCode)->SetFont(m_pFont);
 		nCode++;
 	}
 	EnableButton(FALSE);
+}
+
+
+/// <summary>
+/// フォントを作成する
+/// </summary>
+/// <param name="nFontH"></param>
+/// <returns></returns>
+CFont *CDlgMain::MakeFont(const int nFontH)
+{
+	CFont *pFont = new CFont();
+	pFont->CreateFontA(
+		nFontH,							// int nHeight
+		0,							// int nWidth
+		0,							// int nEscapement
+		0,							// int nOrientation
+		FW_NORMAL,					// int nWeight
+		0,							// BYTE bItalic
+		0,							// BYTE bUnderline
+		0,							// BYTE cStrikeOut
+		DEFAULT_CHARSET,			// BYTE nCharSet
+		OUT_DEFAULT_PRECIS,			// BYTE nOutPrecision
+		CLIP_DEFAULT_PRECIS,		// BYTE nClipPrecision
+		NONANTIALIASED_QUALITY,		// BYTE nQuality or 'DEFAULT_QUALITY'
+		FIXED_PITCH | FF_MODERN,	// BYTE nPitchAndFamily
+		"ＭＳ ゴシック");			// LPCTSTR lpszFacename
+
+	return pFont;
 }
 
 
