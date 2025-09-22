@@ -228,7 +228,12 @@ void CDlgMain::OnBnClickedOk()
 {
 	CWnd *pWnd = GetFocus();
 
-	if (pWnd == GetDlgItem(IDC_BUTTON_QUIT)) { PostMessageA(WM_COMMAND, IDC_BUTTON_QUIT); }
+	if      (pWnd == GetDlgItem(IDC_BUTTON_QUIT))        { PostMessageA(WM_COMMAND, IDC_BUTTON_QUIT); }
+	else if (pWnd == GetDlgItem(IDC_BUTTON_BACK))        { PostMessageA(WM_COMMAND, IDC_BUTTON_BACK); }
+	else if (pWnd == GetDlgItem(IDC_BUTTON_NEXT))        { PostMessageA(WM_COMMAND, IDC_BUTTON_NEXT); }
+	else if (pWnd == GetDlgItem(IDC_BUTTON_SCAN_FILE))   { PostMessageA(WM_COMMAND, IDC_BUTTON_SCAN_FILE); }
+	else if (pWnd == GetDlgItem(IDC_BUTTON_SELECT_PATH)) { PostMessageA(WM_COMMAND, IDC_BUTTON_SELECT_PATH); }
+	else if (pWnd == GetDlgItem(IDC_EDIT_SCANPATH))      { PostMessageA(WM_COMMAND, IDC_BUTTON_SCAN_FILE); }
 	else {
 		NextDlgCtrl();
 	}
@@ -414,7 +419,7 @@ void CDlgMain::End(const int nEndCode)
 
 	ReleaseFolderButton();
 
-	EndDialog(nEndCode ? IDCANCEL : IDOK);
+	EndDialog(IDOK);
 }
 
 
