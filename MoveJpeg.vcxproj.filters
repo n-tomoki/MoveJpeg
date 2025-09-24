@@ -48,6 +48,9 @@
     <ClInclude Include="lib.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="DlgRadioNamePath.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MoveJpeg.cpp">
@@ -72,6 +75,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="lib.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgRadioNamePath.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>

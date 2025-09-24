@@ -7,6 +7,7 @@
 #define IDS_ABOUTBOX                    101
 #define IDD_MOVEJPEG_DIALOG             102
 #define IDR_MAINFRAME                   128
+#define IDD_RADIO_NAME_PATH             130
 #define IDC_BUTTON_QUIT                 1000
 #define IDC_EDIT_SCANPATH               1001
 #define IDC_BUTTON_SELECT_PATH          1002
@@ -20,14 +21,17 @@
 #define IDC_BUTTON_BACK                 1021
 #define IDC_BUTTON_NEXT                 1022
 #define IDC_STATIC_WAKU                 1023
+#define IDC_BUTTON_WRITE_QUIT           1025
+#define IDC_EDIT_NAME                   1026
+#define IDC_EDIT_PATH                   1027
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        130
+#define _APS_NEXT_RESOURCE_VALUE        132
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1024
+#define _APS_NEXT_CONTROL_VALUE         1028
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

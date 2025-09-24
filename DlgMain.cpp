@@ -7,6 +7,8 @@
 #include "MoveJpeg.h"
 #include "DlgMain.h"
 #include "afxdialogex.h"
+#include "DlgRadioNamePath.h"
+
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -704,10 +706,53 @@ void CDlgMain::OnBnClickedRadioFolder4()
 /// <summary>
 /// ラジオボタンで選択されたフォルダ番号をセットする
 /// </summary>
-/// <param name="nNum"></param>
+/// <param name="nNum">番号</param>
 void CDlgMain::SetRadioSelect(const int nNum)
 {
-	m_pScan->SetSelectNum(m_nDispNumber, nNum);
+	if (GetAsyncKeyState(VK_SHIFT) & 0x8000) {
+		int nSize = (int)m_arrButton.GetSize();
+
+		if (nNum >= 0 || nNum < nSize) {
+			SButtonBase *p = (SButtonBase *)m_arrButton.GetAt(nNum);
+			CDlgRadioNamePath dlg;
+
+			dlg.SetParam(p->m_pName, p->m_pPath);
+
+			if (dlg.DoModal()) {
+				CString strName;
+				CString strPath;
+
+				dlg.GetParam(strName, strPath);
+
+				int nLenName = strName.GetLength() + 1;
+				int nLenPath = strPath.GetLength() + 1;
+
+				delete []p->m_pName;
+				delete []p->m_pPath;
+
+				p->m_pName = new char[nLenName + 1];
+				p->m_pPath = new char[nLenPath + 1];
+
+				strcpy_s(p->m_pName, nLenName, (const char *)strName);
+				strcpy_s(p->m_pPath, nLenPath, (const char *)strPath);
+
+				if (strName == "----") { p->m_bUse = FALSE; }
+				else                   { p->m_bUse = TRUE;  }
+
+				GetDlgItem(IDC_RADIO_FOLDER0 + nNum)->SetWindowTextA(p->m_pName);
+
+				m_bFolderButtonWrite = TRUE;
+			}
+
+			if (m_pScan->GetSelectNum(m_nDispNumber) >= 0) {
+				CheckDlgButton(IDC_RADIO_FOLDER0 + nNum, BST_CHECKED);
+			} else {
+				CheckDlgButton(IDC_RADIO_FOLDER0 + nNum, BST_UNCHECKED);
+			}
+		}
+	} else {
+		m_pScan->SetSelectNum(m_nDispNumber, nNum);
+	}
 }
 
 

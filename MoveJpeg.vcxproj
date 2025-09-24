@@ -103,6 +103,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="DlgMain.h" />
+    <ClInclude Include="DlgRadioNamePath.h" />
     <ClInclude Include="File.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Gv.h" />
@@ -116,6 +117,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DlgMain.cpp" />
+    <ClCompile Include="DlgRadioNamePath.cpp" />
     <ClCompile Include="File.cpp" />
     <ClCompile Include="Gv.cpp" />
     <ClCompile Include="lib.cpp" />
