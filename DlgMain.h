@@ -9,9 +9,6 @@
 #include "SearchFile.h"
 
 
-#define SELECT_RADIO_MAXNUM 5
-
-
 // CDlgMain ダイアログ
 class CDlgMain : public CDialogEx
 {
@@ -62,10 +59,13 @@ protected:
 			if (m_pPath != NULL) { delete []m_pPath; }
 		}
 	};
+	BOOL m_bFolderButtonWrite;
 	CPtrArray m_arrButton;
 
-	void InitFolderButton();
-	void ReleaseFolderButton();
+	void FolderButtonInit();
+	void FolderButtonRelease();
+	void FolderButtonSetName();
+	void FolderButtonSave();
 	void SetRadioSelect(const int nNum);
 
 	CFont *m_pFont;

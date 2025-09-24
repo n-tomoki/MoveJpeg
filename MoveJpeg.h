@@ -11,6 +11,11 @@
 #include "resource.h"		// メイン シンボル
 
 
+#define SELECT_RADIO_MAXNUM       5
+#define SELECT_RADIO_NAME_SIZE  100
+#define SELECT_RADIO_NAME_SIZE 1000
+
+
 // CApp:
 // このクラスの実装については、MoveJpeg.cpp を参照してください
 //

@@ -83,6 +83,8 @@ CDlgMain::CDlgMain(CWnd* pParent /*=nullptr*/)
 
 	m_bEnding     = FALSE;
 	m_bInitDialog = FALSE;
+	
+	m_bFolderButtonWrite = FALSE;
 
 	m_pGv   = NULL;
 	m_pScan = NULL;
@@ -263,7 +265,7 @@ void CDlgMain::Init()
 
 	m_pScan = new CSearchFile;
 
-	InitFolderButton();
+	FolderButtonInit();
 }
 
 
@@ -274,75 +276,6 @@ void CDlgMain::InitGv()
 	m_pGv->AutoAdjustMode("ON", "ON", "ON", "ON");
 	m_pGv->DispMsg("OFF");
 	m_pGv->Quantize("AUTO");
-}
-
-
-/// <summary>フォルダボタンの初期化</summary>
-void CDlgMain::InitFolderButton()
-{
-	BOOL bRun = TRUE;
-	int  nCnt = 0;
-	int  nErrCode =   0;
-	int  nErrBit  = 0x1;
-	char szKeyName[20];
-	char szKeyPath[20];
-	CString strName;
-	CString strPath;
-
-	for (int i = 0; i < SELECT_RADIO_MAXNUM; i++) {
-		BOOL bUse = TRUE;
-
-		sprintf_s(szKeyName, "FolderName%02d", i);
-		sprintf_s(szKeyPath, "FolderPath%02d", i);
-
-		strName = App.GetParamFileString("FOLDER", szKeyName);
-		strPath = App.GetParamFileString("FOLDER", szKeyPath);
-
-		if      (strName.IsEmpty()) { bUse = FALSE; strName = "---"; }
-		else if (strName == "----") { bUse = FALSE; }
-
-		if (bUse) {
-			if      (strPath.IsEmpty())             { bUse = FALSE; }
-			else if (!File::IsExistFolder(strPath)) { bUse = FALSE; nErrCode |= nErrBit; }
-		}
-
-		App.WriteParamFileString("FOLDER", szKeyName, strName);
-		App.WriteParamFileString("FOLDER", szKeyPath, strPath);
-
-		int nLenName = strName.GetLength() + 1;
-		int nLenPath = strPath.GetLength() + 1;
-
-
-		SButtonBase *p = new SButtonBase();
-		p->m_pName     = new char[nLenName + 1];
-		p->m_pPath     = new char[nLenPath + 1];
-		p->m_bUse      = bUse;
-
-		strcpy_s(p->m_pName, nLenName, (const char *)strName);
-		strcpy_s(p->m_pPath, nLenPath, (const char *)strPath);
-
-		m_arrButton.Add((void *)p);
-		nErrBit <<= 1;
-	}
-
-	int i;
-	int nCode = IDC_RADIO_FOLDER0;
-	
-	m_pFont = MakeFont(14);
-
-	for (i = 0; i < SELECT_RADIO_MAXNUM; i++) {
-		SButtonBase *pBase = (SButtonBase *)m_arrButton.GetAt(i);
-
-		GetDlgItem(nCode)->SetWindowTextA(pBase->m_pName);
-		GetDlgItem(nCode)->SetFont(m_pFont);
-		nCode++;
-	}
-
-	if (nErrCode) {
-		MessageBoxA("指定されたフォルダが存在しません", "確認", MB_ICONEXCLAMATION|MB_OK);
-	}
-
-	EnableButton(FALSE);
 }
 
 
@@ -417,16 +350,124 @@ void CDlgMain::End(const int nEndCode)
 
 	m_pGv->End();
 
-	ReleaseFolderButton();
+	FolderButtonSave();
+	FolderButtonRelease();
 
 	EndDialog(IDOK);
 }
 
 
+//===========================================================================
+// フォルダボタン(ラジオボタン)関係
+//===========================================================================
+
+/// <summary>フォルダボタンの初期化</summary>
+void CDlgMain::FolderButtonInit()
+{
+	BOOL bRun = TRUE;
+	int  nCnt = 0;
+	int  nErrCode =   0;
+	int  nErrBit  = 0x1;
+	char szKeyName[20];
+	char szKeyPath[20];
+	CString strName;
+	CString strPath;
+
+	for (int i = 0; i < SELECT_RADIO_MAXNUM; i++) {
+		BOOL bUse = TRUE;
+
+		sprintf_s(szKeyName, "FolderName%02d", i);
+		sprintf_s(szKeyPath, "FolderPath%02d", i);
+
+		strName = App.GetParamFileString("FOLDER", szKeyName);
+		strPath = App.GetParamFileString("FOLDER", szKeyPath);
+
+		if      (strName.IsEmpty()) { bUse = FALSE; strName = "---"; }
+		else if (strName == "----") { bUse = FALSE; }
+
+		if (bUse) {
+			if      (strPath.IsEmpty())             { bUse = FALSE; }
+			else if (!File::IsExistFolder(strPath)) { bUse = FALSE; nErrCode |= nErrBit; }
+		}
+
+		App.WriteParamFileString("FOLDER", szKeyName, strName);
+		App.WriteParamFileString("FOLDER", szKeyPath, strPath);
+
+		int nLenName = strName.GetLength() + 1;
+		int nLenPath = strPath.GetLength() + 1;
+
+
+		SButtonBase *p = new SButtonBase();
+		p->m_pName     = new char[nLenName + 1];
+		p->m_pPath     = new char[nLenPath + 1];
+		p->m_bUse      = bUse;
+
+		strcpy_s(p->m_pName, nLenName, (const char *)strName);
+		strcpy_s(p->m_pPath, nLenPath, (const char *)strPath);
+
+		m_arrButton.Add((void *)p);
+		nErrBit <<= 1;
+	}
+
+	m_pFont = MakeFont(14);
+	for (int i = 0; i < SELECT_RADIO_MAXNUM; i++) {
+		SButtonBase *pBase = (SButtonBase *)m_arrButton.GetAt(i);
+
+		GetDlgItem(IDC_RADIO_FOLDER0 + i)->SetFont(m_pFont);
+	}
+
+	FolderButtonSetName();
+
+	if (nErrCode) {
+		MessageBoxA("指定されたフォルダが存在しません", "確認", MB_ICONEXCLAMATION|MB_OK);
+	}
+
+	EnableButton(FALSE);
+}
+
+
 /// <summary>
-/// フォルダボタンのメモリ解放
+/// フォルダ選択ラジオボタンのラベル名を設定します。
 /// </summary>
-void CDlgMain::ReleaseFolderButton()
+void CDlgMain::FolderButtonSetName()
+{
+	for (int i = 0; i < SELECT_RADIO_MAXNUM; i++) {
+		SButtonBase *pBase = (SButtonBase *)m_arrButton.GetAt(i);
+
+		GetDlgItem(IDC_RADIO_FOLDER0 + i)->SetWindowTextA(pBase->m_pName);
+	}
+}
+
+
+/// <summary>
+/// フォルダ選択ラジオボタンを保存
+/// </summary>
+void CDlgMain::FolderButtonSave()
+{
+	if (!m_bFolderButtonWrite) { return; }
+	m_bFolderButtonWrite = FALSE;
+
+	char szKeyName[20];
+	char szKeyPath[20];
+	CString strName;
+	CString strPath;
+
+	for (int i = 0; i < SELECT_RADIO_MAXNUM; i++) {
+		SButtonBase *p = (SButtonBase *)m_arrButton.GetAt(i);
+
+		sprintf_s(szKeyName, "FolderName%02d", i);
+		sprintf_s(szKeyPath, "FolderPath%02d", i);
+
+		App.WriteParamFileString("FOLDER", szKeyName, p->m_pName);
+		App.WriteParamFileString("FOLDER", szKeyPath, p->m_pPath);
+	}
+}
+
+
+/// <summary>
+/// フォルダ選択ラジオボタンのメモリ解放
+/// </summary>
+void CDlgMain::FolderButtonRelease()
 {
 	int nSize = (int)m_arrButton.GetSize();
 
