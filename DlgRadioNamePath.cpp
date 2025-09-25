@@ -55,6 +55,15 @@ BOOL CDlgRadioNamePath::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
+	CMenu *pMenu = GetSystemMenu(FALSE);
+	if (pMenu != nullptr)
+	{
+		pMenu->RemoveMenu(SC_RESTORE , MF_BYCOMMAND);  // ウィンドウを通常の位置とサイズに戻します。
+		pMenu->RemoveMenu(SC_MAXIMIZE, MF_BYCOMMAND);  // ウィンドウを最大化します。
+		pMenu->RemoveMenu(SC_MINIMIZE, MF_BYCOMMAND);  // ウィンドウを最小化します。
+	}
+
+
 	SetIcon(m_hIcon, TRUE);			// 大きいアイコンの設定
 	SetIcon(m_hIcon, FALSE);		// 小さいアイコンの設定
 

@@ -94,11 +94,16 @@ CDlgMain::CDlgMain(CWnd* pParent /*=nullptr*/)
 
 	m_nDispNumber = 0;
 	m_nDispMaxNum = 0;
+
+	// 画像反転
+	m_pIWICFactory = NULL;
 }
 
 
 CDlgMain::~CDlgMain()
 {
+	if (m_pIWICFactory != NULL) { m_pIWICFactory->Release(); }
+
 	delete m_pGv;
 	delete m_pScan;
 	delete m_pFont;
@@ -131,6 +136,7 @@ BEGIN_MESSAGE_MAP(CDlgMain, CDialogEx)
 	ON_BN_CLICKED(IDC_RADIO_FOLDER2, &CDlgMain::OnBnClickedRadioFolder2)
 	ON_BN_CLICKED(IDC_RADIO_FOLDER3, &CDlgMain::OnBnClickedRadioFolder3)
 	ON_BN_CLICKED(IDC_RADIO_FOLDER4, &CDlgMain::OnBnClickedRadioFolder4)
+	ON_BN_CLICKED(IDC_BUTTON_IMAGE_FLIP, &CDlgMain::OnBnClickedButtonImageFlip)
 END_MESSAGE_MAP()
 
 
@@ -158,6 +164,10 @@ BOOL CDlgMain::OnInitDialog()
 			pSysMenu->AppendMenuA(MF_SEPARATOR);
 			pSysMenu->AppendMenuA(MF_STRING, IDM_ABOUTBOX, strAboutMenu);
 		}
+
+		pSysMenu->RemoveMenu(SC_RESTORE , MF_BYCOMMAND);  // ウィンドウを通常の位置とサイズに戻します。
+		pSysMenu->RemoveMenu(SC_MAXIMIZE, MF_BYCOMMAND);  // ウィンドウを最大化します。
+		pSysMenu->RemoveMenu(SC_MINIMIZE, MF_BYCOMMAND);  // ウィンドウを最小化します。
 	}
 
 	// このダイアログのアイコンを設定します。アプリケーションのメイン ウィンドウがダイアログでない場合、
@@ -354,6 +364,11 @@ void CDlgMain::End(const int nEndCode)
 
 	FolderButtonSave();
 	FolderButtonRelease();
+
+	if (m_pIWICFactory != NULL) {
+		m_pIWICFactory->Release();
+		m_pIWICFactory = NULL;
+	}
 
 	EndDialog(IDOK);
 }
@@ -581,9 +596,12 @@ BOOL CDlgMain::GvFileOpen(const char *pszFileName)
 void CDlgMain::EnableButton(BOOL bEnable)
 {
 	if (!bEnable) {
-		GetDlgItem(IDC_BUTTON_BACK)->EnableWindow(FALSE);
-		GetDlgItem(IDC_BUTTON_NEXT)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_BACK)      ->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_NEXT)      ->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_IMAGE_FLIP)->EnableWindow(FALSE);
 	} else {
+		GetDlgItem(IDC_BUTTON_IMAGE_FLIP)->EnableWindow(TRUE);
+
 		if (m_nDispNumber == 0) {
 			GetDlgItem(IDC_BUTTON_BACK)->EnableWindow(FALSE);
 		} else {
@@ -595,6 +613,8 @@ void CDlgMain::EnableButton(BOOL bEnable)
 		} else {
 			GetDlgItem(IDC_BUTTON_NEXT)->EnableWindow(FALSE);
 		}
+		
+		GetDlgItem(IDC_BUTTON_IMAGE_FLIP)->EnableWindow(TRUE);
 
 		int nRadio = m_pScan->GetSelectNum(m_nDispNumber);
 		for (int i = 0; i < SELECT_RADIO_MAXNUM; i++) {
@@ -836,12 +856,6 @@ BOOL CDlgMain::CreateDestFileName(const char *pszSrcName, const char *pszDstPath
 
 
 //===========================================================================
-// いろいろ
-//===========================================================================
-
-
-
-//===========================================================================
 // 強制終了処理
 //===========================================================================
 
@@ -994,5 +1008,255 @@ void CDlgMain::InitWindowPos()
 	if (m_sizeDlgMin.cx > cx || m_sizeDlgMin.cy > cy) { return; }
 
 	MoveWindow(x, y, cx, cy);
+}
+
+
+//===========================================================================
+// 画像を反転する
+//===========================================================================
+
+/// <summary>
+/// 画像を反転する
+/// </summary>
+void CDlgMain::OnBnClickedButtonImageFlip()
+{
+	CString strPath;
+	CString strExt;
+
+	m_pScan->GetFilePath(m_nDispNumber, strPath);
+
+	int nExt = strPath.ReverseFind('.');
+	if (nExt < 1) { return; }
+
+	if (strPath.GetAt(nExt) == '.') {
+		strExt = strPath.Mid(nExt);
+	}
+
+	if (!File::IsExistFile(strPath)) { return; }
+
+	ReversalMain(strPath, strExt);
+	GvFileOpen(strPath);
+
+	SetForegroundWindow();	// フォーカスを戻す
+}
+
+
+/// <summary>
+/// 画像反転のメイン
+/// </summary>
+/// <param name="strFileName">ファイル名</param>
+/// <param name="strExt">拡張子</param>
+/// <returns>FALSE:失敗/TRUE:成功</returns>
+BOOL CDlgMain::ReversalMain(CString strFileName, CString strExt)
+{
+	BOOL bRet = FALSE;
+
+	// IWICImagingFactory オブジェクトを作成
+	if (!CreateIWICImagingFactory()) { return bRet; }
+
+	HRESULT hr;
+
+	IWICBitmapDecoder     *pIDecoder      = NULL;
+	IWICBitmapFrameDecode *pIDecoderFrame = NULL;
+	IWICBitmapFlipRotator *pIFlipRotator  = NULL;
+	IWICFormatConverter   *pIConverter    = NULL;
+
+	// ファイル名をUnicodeに変換する
+	int nLenShiftjis = strFileName.GetLength();
+	int nLenUnicode  = MultiByteToWideChar(
+		CP_ACP,
+		0,
+		(const char *)strFileName,
+		nLenShiftjis + 1,
+		NULL,
+		0); 
+
+	WCHAR *pFileName = new WCHAR[nLenUnicode + 1];
+	int n = MultiByteToWideChar(
+		CP_ACP,
+		0,
+		(const char *)strFileName,
+		nLenShiftjis,
+		pFileName,
+		nLenUnicode);
+	pFileName[n] = '\0';
+
+	// イメージファイルファイルの読み込み
+	hr = m_pIWICFactory->CreateDecoderFromFilename(
+		pFileName,
+		NULL,                           // Do not prefer a particular vendor
+		GENERIC_READ,                   // Desired read access to the file
+		WICDecodeMetadataCacheOnDemand, // Cache metadata when needed
+		&pIDecoder                      // Pointer to the decoder
+		);
+
+	// 読み込んだイメージを取得する
+	if (SUCCEEDED(hr)) {
+		hr = pIDecoder->GetFrame(0, &pIDecoderFrame);
+	}
+
+	// イメージの反転に使用する IWICBitmapFlipRotator を作成する
+	if (SUCCEEDED(hr)) {
+		hr = m_pIWICFactory->CreateBitmapFlipRotator(&pIFlipRotator);
+	}
+
+	// イメージの反転する
+	if (SUCCEEDED(hr)) {
+		hr = pIFlipRotator->Initialize(
+			pIDecoderFrame,                     // Bitmap source to flip.
+			WICBitmapTransformFlipHorizontal);  // Flip the pixels along the 
+	}
+
+	// 反転したイメージを取得する
+	IWICBitmapSource *pSource = NULL;
+	if (SUCCEEDED(hr)) {
+		hr = pIFlipRotator->QueryInterface(IID_PPV_ARGS(&pSource));
+	}	
+
+	// フォーマットコンバータ生成 (32bppBGRAビットマップに変換用)
+	if (SUCCEEDED(hr)) {
+		hr = m_pIWICFactory->CreateFormatConverter(&pIConverter);
+	}
+
+	// イメージを 32bppBGRAビットマップ に変換
+	if (SUCCEEDED(hr)) {
+		hr = pIConverter->Initialize(pSource, GUID_WICPixelFormat32bppBGRA,
+			WICBitmapDitherTypeNone, NULL, 0.f, WICBitmapPaletteTypeCustom);
+	}
+
+	// 変換したイメージを取得
+	IWICBitmapSource *pImage = NULL;
+	if (SUCCEEDED(hr)) {
+		hr = pIConverter->QueryInterface(IID_PPV_ARGS(&pImage));
+	}
+
+	// イメージからビットマップに変換
+	HBITMAP hBmp = NULL;
+	if (SUCCEEDED(hr)) {
+		hBmp = CreateHBitmapFromBitmapSource(pImage);
+	}
+
+	CString strTempFile = "TempFile" + strExt;
+
+	// ファイルに出力
+	if (hBmp != NULL) {
+		CImage Image;
+
+		Image.Attach(hBmp);
+		Image.Save(strTempFile);
+		Image.Detach();
+
+		DeleteObject(hBmp);
+		bRet = TRUE;
+	}
+
+	if (pImage         != NULL) { pImage        ->Release(); }
+	if (pSource        != NULL) { pSource       ->Release(); }
+	if (pIConverter    != NULL) { pIConverter   ->Release(); }
+	if (pIFlipRotator  != NULL) { pIFlipRotator ->Release(); }
+	if (pIDecoderFrame != NULL) { pIDecoderFrame->Release(); }
+	if (pIDecoder      != NULL) { pIDecoder     ->Release(); }
+	delete []pFileName;
+
+	if (bRet) {
+		if (!CopyFileA(strTempFile, strFileName, FALSE)) {
+			bRet = FALSE;
+		}
+	}
+
+	return bRet;
+}
+
+
+/// <summary>
+/// WICイメージからビットマップハンドルを生成
+/// </summary>
+/// <param name="pImage">WICイメージ</param>
+/// <returns>ビットマップハンドル</returns>
+HBITMAP CDlgMain::CreateHBitmapFromBitmapSource(IWICBitmapSource *pImage)
+{
+	HRESULT hr;                       // 処理結果
+	WICPixelFormatGUID format;        // WICフォーマット
+	BITMAPINFO bminfo = {};           // ビットマップヘッダ
+	HDC hdc;                          // デバイスコンテキストハンドル
+	UINT uWidth        = 0;           // ビットマップ幅
+	UINT uHeight       = 0;           // ビットマップ高さ
+	HBITMAP hBmp      = NULL;         // ビットマップハンドル
+	LPVOID imageBits  = NULL;         // ビットマップイメージ
+
+	// 32bppBGRAか確認
+	hr = pImage->GetPixelFormat(&format);
+	if (SUCCEEDED(hr)) {
+		if (format == GUID_WICPixelFormat32bppBGRA) {
+			hr = S_OK;
+		} else {
+			hr = E_FAIL;
+		}
+	}
+
+	// ビットマップサイズを取得
+	if (SUCCEEDED(hr)) {
+	  hr = pImage->GetSize(&uWidth, &uHeight);
+	}
+
+	// DIBを生成
+	if (SUCCEEDED(hr)) {
+		bminfo.bmiHeader.biSize = sizeof(BITMAPINFO);
+		bminfo.bmiHeader.biBitCount = 32;
+		bminfo.bmiHeader.biCompression = BI_RGB;
+		bminfo.bmiHeader.biWidth = uWidth;
+		bminfo.bmiHeader.biHeight = -static_cast<LONG>(uHeight);
+		bminfo.bmiHeader.biPlanes = 1;
+		hdc = ::GetDC(HWND_DESKTOP);
+		hBmp = CreateDIBSection(hdc, &bminfo, DIB_RGB_COLORS, &imageBits, NULL, 0);
+
+		if (hBmp) {
+			hr = S_OK;
+		} else {
+			hr = E_FAIL;
+		}
+
+		::ReleaseDC(HWND_DESKTOP, hdc);
+	}
+
+	// イメージをコピー
+	if (SUCCEEDED(hr)) {
+		hr = pImage->CopyPixels(NULL,
+			uWidth * 4,
+			uWidth * uHeight * 4,
+			reinterpret_cast<BYTE *>(imageBits));
+	} else if (hBmp != NULL) {
+		DeleteObject(hBmp);
+		hBmp = NULL;
+	}
+
+	// ビットマップハンドルを返す
+	return hBmp;
+}
+
+
+/// <summary>
+/// Windows イメージング コンポーネントの作成
+/// </summary>
+BOOL CDlgMain::CreateIWICImagingFactory()
+{
+	BOOL bRet = FALSE;
+
+	if (m_pIWICFactory != NULL) { return TRUE; }
+
+	HRESULT hr;
+
+	// IWICImagingFactory オブジェクトを作成
+	hr = CoCreateInstance(
+		CLSID_WICImagingFactory,
+		NULL,
+		CLSCTX_INPROC_SERVER,
+		IID_PPV_ARGS(&m_pIWICFactory)
+    );
+
+	if (SUCCEEDED(hr)) { bRet           = TRUE; }
+	else               { m_pIWICFactory = NULL; }
+
+	return bRet;
 }
 

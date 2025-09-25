@@ -78,6 +78,13 @@ protected:
 	int ExecCopy();
 	BOOL CreateDestFileName(const char *pszSrcName, const char *pszDstPath, CString  &strDstPath);
 
+	// Windows イメージング コンポーネント
+	IWICImagingFactory *m_pIWICFactory;
+
+	//画像を反転する
+	BOOL ReversalMain(CString strFileName, CString strExt);
+	BOOL CreateIWICImagingFactory();
+	HBITMAP CreateHBitmapFromBitmapSource(IWICBitmapSource *pImage);
 
 
 	// GV.EXE関係
@@ -126,4 +133,5 @@ public:
 	afx_msg void OnBnClickedRadioFolder2();
 	afx_msg void OnBnClickedRadioFolder3();
 	afx_msg void OnBnClickedRadioFolder4();
+	afx_msg void OnBnClickedButtonImageFlip();
 };
