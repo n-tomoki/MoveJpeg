@@ -137,6 +137,7 @@ BEGIN_MESSAGE_MAP(CDlgMain, CDialogEx)
 	ON_BN_CLICKED(IDC_RADIO_FOLDER3, &CDlgMain::OnBnClickedRadioFolder3)
 	ON_BN_CLICKED(IDC_RADIO_FOLDER4, &CDlgMain::OnBnClickedRadioFolder4)
 	ON_BN_CLICKED(IDC_BUTTON_IMAGE_FLIP, &CDlgMain::OnBnClickedButtonImageFlip)
+	ON_BN_CLICKED(IDC_BUTTON_SELECT_CANCEL, &CDlgMain::OnBnClickedButtonSelectCancel)
 END_MESSAGE_MAP()
 
 
@@ -596,9 +597,10 @@ BOOL CDlgMain::GvFileOpen(const char *pszFileName)
 void CDlgMain::EnableButton(BOOL bEnable)
 {
 	if (!bEnable) {
-		GetDlgItem(IDC_BUTTON_BACK)      ->EnableWindow(FALSE);
-		GetDlgItem(IDC_BUTTON_NEXT)      ->EnableWindow(FALSE);
-		GetDlgItem(IDC_BUTTON_IMAGE_FLIP)->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_BACK)         ->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_NEXT)         ->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_IMAGE_FLIP)   ->EnableWindow(FALSE);
+		GetDlgItem(IDC_BUTTON_SELECT_CANCEL)->EnableWindow(FALSE);
 	} else {
 		GetDlgItem(IDC_BUTTON_IMAGE_FLIP)->EnableWindow(TRUE);
 
@@ -614,21 +616,36 @@ void CDlgMain::EnableButton(BOOL bEnable)
 			GetDlgItem(IDC_BUTTON_NEXT)->EnableWindow(FALSE);
 		}
 		
-		GetDlgItem(IDC_BUTTON_IMAGE_FLIP)->EnableWindow(TRUE);
+		EnableButtonRadio();
+	}
+}
 
-		int nRadio = m_pScan->GetSelectNum(m_nDispNumber);
-		for (int i = 0; i < SELECT_RADIO_MAXNUM; i++) {
-			BOOL bEnable = TRUE;
-			SButtonBase *p = (SButtonBase *)m_arrButton.GetAt(i);
 
-			if (nRadio == i) {
-				CheckDlgButton(IDC_RADIO_FOLDER0 + i, BST_CHECKED);
-			} else {
-				CheckDlgButton(IDC_RADIO_FOLDER0 + i, BST_UNCHECKED);
-			}
+/// <summary>
+/// ラジオボタンの状態を設定する
+/// </summary>
+void CDlgMain::EnableButtonRadio()
+{
+	int nRadio = m_pScan->GetSelectNum(m_nDispNumber);
+
+	if (nRadio >= 0) {
+		GetDlgItem(IDC_BUTTON_SELECT_CANCEL)->EnableWindow(TRUE);
+	} else {
+		GetDlgItem(IDC_BUTTON_SELECT_CANCEL)->EnableWindow(FALSE);
+	}
+
+	for (int i = 0; i < SELECT_RADIO_MAXNUM; i++) {
+		BOOL bEnable = TRUE;
+		SButtonBase *p = (SButtonBase *)m_arrButton.GetAt(i);
+
+		if (nRadio == i) {
+			CheckDlgButton(IDC_RADIO_FOLDER0 + i, BST_CHECKED);
+		} else {
+			CheckDlgButton(IDC_RADIO_FOLDER0 + i, BST_UNCHECKED);
 		}
 	}
 }
+
 
 
 /// <summary>
@@ -730,49 +747,71 @@ void CDlgMain::OnBnClickedRadioFolder4()
 void CDlgMain::SetRadioSelect(const int nNum)
 {
 	if (GetAsyncKeyState(VK_SHIFT) & 0x8000) {
-		int nSize = (int)m_arrButton.GetSize();
-
-		if (nNum >= 0 || nNum < nSize) {
-			SButtonBase *p = (SButtonBase *)m_arrButton.GetAt(nNum);
-			CDlgRadioNamePath dlg;
-
-			dlg.SetParam(p->m_pName, p->m_pPath);
-
-			if (dlg.DoModal()) {
-				CString strName;
-				CString strPath;
-
-				dlg.GetParam(strName, strPath);
-
-				int nLenName = strName.GetLength() + 1;
-				int nLenPath = strPath.GetLength() + 1;
-
-				delete []p->m_pName;
-				delete []p->m_pPath;
-
-				p->m_pName = new char[nLenName + 1];
-				p->m_pPath = new char[nLenPath + 1];
-
-				strcpy_s(p->m_pName, nLenName, (const char *)strName);
-				strcpy_s(p->m_pPath, nLenPath, (const char *)strPath);
-
-				if (strName == "----") { p->m_bUse = FALSE; }
-				else                   { p->m_bUse = TRUE;  }
-
-				GetDlgItem(IDC_RADIO_FOLDER0 + nNum)->SetWindowTextA(p->m_pName);
-
-				m_bFolderButtonWrite = TRUE;
-			}
-
-			if (m_pScan->GetSelectNum(m_nDispNumber) >= 0) {
-				CheckDlgButton(IDC_RADIO_FOLDER0 + nNum, BST_CHECKED);
-			} else {
-				CheckDlgButton(IDC_RADIO_FOLDER0 + nNum, BST_UNCHECKED);
-			}
-		}
+		// ラジオボタンの名称とパスを編集する
+		SetRadioNamePath(nNum);
 	} else {
 		m_pScan->SetSelectNum(m_nDispNumber, nNum);
+		EnableButtonRadio();
 	}
+}
+
+
+/// <summary>
+/// ラジオボタンの名称とパスを編集する
+/// </summary>
+/// <param name="nNum">番号</param>
+void CDlgMain::SetRadioNamePath(const int nNum)
+{
+	int nSize = (int)m_arrButton.GetSize();
+
+	if (nNum >= 0 || nNum < nSize) {
+		SButtonBase *p = (SButtonBase *)m_arrButton.GetAt(nNum);
+		CDlgRadioNamePath dlg;
+
+		dlg.SetParam(p->m_pName, p->m_pPath);
+
+		if (dlg.DoModal()) {
+			CString strName;
+			CString strPath;
+
+			dlg.GetParam(strName, strPath);
+
+			int nLenName = strName.GetLength() + 1;
+			int nLenPath = strPath.GetLength() + 1;
+
+			delete []p->m_pName;
+			delete []p->m_pPath;
+
+			p->m_pName = new char[nLenName + 1];
+			p->m_pPath = new char[nLenPath + 1];
+
+			strcpy_s(p->m_pName, nLenName, (const char *)strName);
+			strcpy_s(p->m_pPath, nLenPath, (const char *)strPath);
+
+			if (strName == "----") { p->m_bUse = FALSE; }
+			else                   { p->m_bUse = TRUE;  }
+
+			GetDlgItem(IDC_RADIO_FOLDER0 + nNum)->SetWindowTextA(p->m_pName);
+
+			m_bFolderButtonWrite = TRUE;
+		}
+
+		if (m_pScan->GetSelectNum(m_nDispNumber) >= 0) {
+			CheckDlgButton(IDC_RADIO_FOLDER0 + nNum, BST_CHECKED);
+		} else {
+			CheckDlgButton(IDC_RADIO_FOLDER0 + nNum, BST_UNCHECKED);
+		}
+	}
+}
+
+
+/// <summary>
+/// 選択を取り消す
+/// </summary>
+void CDlgMain::OnBnClickedButtonSelectCancel()
+{
+	m_pScan->SetSelectNum(m_nDispNumber, -1);
+	EnableButtonRadio();
 }
 
 

@@ -24,8 +24,9 @@
 #define IDC_BUTTON_WRITE_QUIT           1025
 #define IDC_EDIT_NAME                   1026
 #define IDC_EDIT_PATH                   1027
-#define IDC_BUTTON1                     1028
 #define IDC_BUTTON_IMAGE_FLIP           1028
+#define IDC_BUTTON_IMAGE_FLIP2          1029
+#define IDC_BUTTON_SELECT_CANCEL        1029
 
 // Next default values for new objects
 // 

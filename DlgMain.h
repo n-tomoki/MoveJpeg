@@ -67,12 +67,14 @@ protected:
 	void FolderButtonSetName();
 	void FolderButtonSave();
 	void SetRadioSelect(const int nNum);
+	void SetRadioNamePath(const int nNum);
 
 	CFont *m_pFont;
 	CFont *MakeFont(const int nFontH = 14);
 
 
 	void EnableButton(BOOL bEnable = TRUE);
+	void EnableButtonRadio();
 
 	// 画像の転送をする
 	int ExecCopy();
@@ -134,4 +136,5 @@ public:
 	afx_msg void OnBnClickedRadioFolder3();
 	afx_msg void OnBnClickedRadioFolder4();
 	afx_msg void OnBnClickedButtonImageFlip();
+	afx_msg void OnBnClickedButtonSelectCancel();
 };

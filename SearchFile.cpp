@@ -83,7 +83,7 @@ int CSearchFile::Main(const char *pszSearchPath)
 
 	if (!GetExtSize()) { return 1; }
 
-	if (IDYES == App.m_pMainWnd->MessageBoxA("サブホルダーも検索しますか？", "", MB_ICONQUESTION|MB_YESNO)) {
+	if (IDYES == App.m_pMainWnd->MessageBoxA("サブホルダーも検索しますか？", "確認", MB_ICONQUESTION|MB_YESNO)) {
 		bSubFolder = TRUE;
 	}
 
