@@ -13,7 +13,10 @@ class CSearchFile {
 		CString m_strFileName;
 		unsigned long long m_dw64DateTime;
 
-		CBase();
+		CBase() {
+			m_nSelecct     = -1;
+			m_dw64DateTime = 0;
+		}
 	};
 	/////////////////////////////////////////////////////////////////////////////
 

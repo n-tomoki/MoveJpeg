@@ -8,13 +8,6 @@
 
 
 /////////////////////////////////////////////////////////////////////////////
-CSearchFile::CBase::CBase()
-{
-	m_nSelecct     = -1;
-	m_dw64DateTime = 0;
-}
-
-/////////////////////////////////////////////////////////////////////////////
 //===========================================================================
 // 開始＆終了処理
 //===========================================================================
@@ -36,7 +29,7 @@ CSearchFile::~CSearchFile()
 void CSearchFile::End()
 {
 	int i;
-	int nSize = GetSize();
+	int nSize = (int)m_arrFileName.GetSize();
 
 	if (nSize) {
 		for (i = 0; i < nSize; i++) {
@@ -76,12 +69,15 @@ void CSearchFile::Init()
 /// ファイルの検索
 /// </summary>
 /// <param name="pszSearchPath">検索フォルダ</param>
-/// <returns>0</returns>
+/// <returns>正常：0/エラー:1</returns>
 int CSearchFile::Main(const char *pszSearchPath)
 {
 	BOOL bSubFolder = FALSE;
 
-	if (!GetExtSize()) { return 1; }
+	if (!GetExtSize()) {
+		App.m_pMainWnd->MessageBoxA("検索する拡張子が登録されていません", "異常事態", MB_ICONERROR|MB_OK);
+		return 1;
+	}
 
 	if (IDYES == App.m_pMainWnd->MessageBoxA("サブホルダーも検索しますか？", "確認", MB_ICONQUESTION|MB_YESNO)) {
 		bSubFolder = TRUE;
@@ -177,20 +173,20 @@ int CSearchFile::GetSize()
 /// ファイルパスを返す
 /// </summary>
 /// <param name="nNum">インデックス番号</param>
-/// <param name="strFullPath">ファイルパス</param>
+/// <param name="str">ファイルパス</param>
 /// <returns>FALSE:成功/TRUE:失敗</returns>
-BOOL CSearchFile::GetFilePath(const int nNum, CString &strFullPath)
+BOOL CSearchFile::GetFilePath(const int nNum, CString &str)
 {
 	BOOL bRet = FALSE;
 	int nSize = GetSize();
 
 	if (nNum < 0 || nNum >= nSize) {
-		strFullPath.Empty();
+		str.Empty();
 		bRet = TRUE;
 	} else {
 		CBase *p = (CBase *)m_arrFileName.GetAt(nNum);
 
-		strFullPath = p->m_strFullPath;
+		str = p->m_strFullPath;
 	}
 
 	return bRet;
@@ -268,19 +264,19 @@ CString CSearchFile::GetFileName(const int nNum)
 /// <param name="nNum">インデックス番号</param>
 /// <param name="strExt">拡張子</param>
 /// <returns>FALSE:成功/TRUE:失敗</returns>
-BOOL CSearchFile::GetFileExt(const int nNum, CString &strExt)
+BOOL CSearchFile::GetFileExt(const int nNum, CString &str)
 {
 	int n;
 	const char *cp;
-	CString str;
+	CString strTmp;
 
-	GetFilePath(nNum, str);
+	GetFilePath(nNum, strTmp);
 
-	n = str.ReverseFind('.');
-	if (n < 0) { return TRUE; }
+	n = strTmp.ReverseFind('.');
+	if (n <= 0) { return TRUE; }
 	
-	cp = (const char *)str;
-	strExt = (cp + n);
+	cp  = (const char *)strTmp;
+	str = (cp + n);
 
 	return FALSE;
 }
